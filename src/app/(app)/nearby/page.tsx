@@ -140,7 +140,7 @@ export default function NearbyPage() {
         </h1>
 
         <p className="text-sm text-gray-600 max-w-xs">
-          DownXtown needs your location to show nearby stores. Please enable
+          Downxtown needs your location to show nearby stores. Please enable
           location access in your browser settings and reload the page.
         </p>
 

@@ -28,6 +28,8 @@ import type { Personal } from '@/types/user'
 
 type Step = 1 | 2 | 3 | 4
 
+type GenderValue = 'MALE' | 'FEMALE' | 'OTHER' | 'PREFER_NOT_TO_SAY' | ''
+
 interface WizardState {
   email: string
   password: string
@@ -50,9 +52,9 @@ function StepIndicator({ current, total }: { current: Step; total: number }) {
               className={[
                 'w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors',
                 isCompleted
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-brand text-white'
                   : isActive
-                  ? 'bg-blue-600 text-white ring-4 ring-blue-100'
+                  ? 'bg-brand text-white ring-4 ring-blue-100'
                   : 'bg-gray-100 text-gray-400',
               ].join(' ')}
             >
@@ -62,7 +64,7 @@ function StepIndicator({ current, total }: { current: Step; total: number }) {
               <div
                 className={[
                   'w-8 h-0.5 transition-colors',
-                  isCompleted ? 'bg-blue-600' : 'bg-gray-200',
+                  isCompleted ? 'bg-brand' : 'bg-gray-200',
                 ].join(' ')}
               />
             )}
@@ -116,7 +118,7 @@ function EmailInputStep({
           value={email}
           onChange={(e) => { setEmail(e.target.value); setError(null) }}
           placeholder="you@example.com"
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition"
           required
         />
         {error && (
@@ -127,7 +129,7 @@ function EmailInputStep({
       <button
         type="submit"
         disabled={!email.trim()}
-        className="w-full px-4 py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-4 py-3 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Continue
       </button>
@@ -188,7 +190,7 @@ function PasswordCreationStep({
             value={password}
             onChange={(e) => { setPassword(e.target.value); setTouched(false) }}
             placeholder="••••••••"
-            className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+            className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition"
           />
           <button
             type="button"
@@ -236,7 +238,7 @@ function PasswordCreationStep({
               'w-full px-4 py-3 pr-12 rounded-xl border text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition',
               touched && confirm.length > 0 && !passwordsMatch
                 ? 'border-red-300 focus:ring-red-400'
-                : 'border-gray-200 focus:ring-blue-500',
+                : 'border-gray-200 focus:ring-brand',
             ].join(' ')}
           />
           <button
@@ -256,7 +258,7 @@ function PasswordCreationStep({
       <button
         type="submit"
         disabled={!canContinue}
-        className="w-full px-4 py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-4 py-3 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Continue
       </button>
@@ -344,7 +346,7 @@ function EmailVerificationStep({
         type="button"
         onClick={handleCheckVerification}
         disabled={checking}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {checking && <Loader2 className="w-4 h-4 animate-spin" />}
         I&apos;ve verified my email
@@ -377,7 +379,7 @@ function PersonalUserDetailsStep({
 }) {
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
-  const [gender, setGender] = useState<'MALE' | 'FEMALE' | 'OTHER' | ''>('')
+  const [gender, setGender] = useState<GenderValue>('PREFER_NOT_TO_SAY')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [usernameError, setUsernameError] = useState<string | null>(null)
   const [generalError, setGeneralError] = useState<string | null>(null)
@@ -396,7 +398,6 @@ function PersonalUserDetailsStep({
     if (!name.trim()) { setGeneralError('Name is required.'); valid = false }
     const uErr = validateUsername(username)
     if (uErr) { setUsernameError(uErr); valid = false }
-    if (!gender) { setGeneralError('Please select your gender.'); valid = false }
     if (!dateOfBirth) { setGeneralError('Date of birth is required.'); valid = false }
     return valid
   }
@@ -428,7 +429,7 @@ function PersonalUserDetailsStep({
     }
   }
 
-  const canSubmit = name.trim() && username.trim() && gender && dateOfBirth
+  const canSubmit = name.trim() && username.trim() && dateOfBirth
 
   return (
     <form onSubmit={handleSubmit} noValidate className="space-y-5">
@@ -449,7 +450,7 @@ function PersonalUserDetailsStep({
           value={name}
           onChange={(e) => { setName(e.target.value); setGeneralError(null) }}
           placeholder="Your full name"
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition"
           required
         />
       </div>
@@ -470,7 +471,7 @@ function PersonalUserDetailsStep({
             'w-full px-4 py-3 rounded-xl border text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition',
             usernameError
               ? 'border-red-300 focus:ring-red-400'
-              : 'border-gray-200 focus:ring-blue-500',
+              : 'border-gray-200 focus:ring-brand',
           ].join(' ')}
           required
         />
@@ -484,16 +485,15 @@ function PersonalUserDetailsStep({
       {/* Gender */}
       <div>
         <label htmlFor="reg-gender" className="block text-sm font-medium text-gray-700 mb-1.5">
-          Gender
+          Gender (optional)
         </label>
         <select
           id="reg-gender"
           value={gender}
-          onChange={(e) => { setGender(e.target.value as 'MALE' | 'FEMALE' | 'OTHER'); setGeneralError(null) }}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition appearance-none"
-          required
+          onChange={(e) => { setGender(e.target.value as GenderValue); setGeneralError(null) }}
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 bg-white focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition appearance-none"
         >
-          <option value="" disabled>Select gender</option>
+          <option value="PREFER_NOT_TO_SAY">Prefer not to say</option>
           <option value="MALE">Male</option>
           <option value="FEMALE">Female</option>
           <option value="OTHER">Other</option>
@@ -511,7 +511,7 @@ function PersonalUserDetailsStep({
           value={dateOfBirth}
           onChange={(e) => { setDateOfBirth(e.target.value); setGeneralError(null) }}
           max={new Date().toISOString().split('T')[0]}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+          className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition"
           required
         />
       </div>
@@ -526,7 +526,7 @@ function PersonalUserDetailsStep({
       <button
         type="submit"
         disabled={loading || !canSubmit}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
         Create Account
@@ -602,7 +602,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">DownXtown</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Downxtown</h1>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">

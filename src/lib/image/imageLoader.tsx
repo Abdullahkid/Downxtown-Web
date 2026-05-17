@@ -135,7 +135,7 @@ function FallbackPlaceholder({
         <circle cx="8.5" cy="8.5" r="1.5" />
         <polyline points="21 15 16 10 5 21" />
       </svg>
-      <span className="text-xs font-medium opacity-60">DownXtown</span>
+      <span className="text-xs font-medium opacity-60">Downxtown</span>
     </div>
   )
 }

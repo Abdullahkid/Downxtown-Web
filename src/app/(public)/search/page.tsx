@@ -15,13 +15,7 @@ import {
   Search,
   Smartphone,
   Shirt,
-  Home,
   Sparkles,
-  Dumbbell,
-  BookOpen,
-  Gamepad2,
-  ShoppingBasket,
-  Gem,
   Footprints,
   Clock,
   X,
@@ -29,6 +23,7 @@ import {
 } from 'lucide-react'
 import { SearchBar } from '@/components/search/SearchBar'
 import { FilterSheet, DEFAULT_FILTERS, countActiveFilters } from '@/components/search/FilterSheet'
+import { FilterPanel } from '@/components/search/FilterPanel'
 import { SearchResults } from '@/components/search/SearchResults'
 import type { SearchFilters } from '@/components/search/FilterSheet'
 import { cacheStore } from '@/lib/cache/cacheStore'
@@ -46,16 +41,11 @@ interface CategoryItem {
 }
 
 const CATEGORIES: CategoryItem[] = [
-  { name: 'Electronics', icon: <Smartphone size={24} aria-hidden="true" />, slug: 'electronics' },
-  { name: 'Fashion', icon: <Shirt size={24} aria-hidden="true" />, slug: 'fashion' },
-  { name: 'Home & Kitchen', icon: <Home size={24} aria-hidden="true" />, slug: 'home-kitchen' },
-  { name: 'Beauty', icon: <Sparkles size={24} aria-hidden="true" />, slug: 'beauty' },
-  { name: 'Sports', icon: <Dumbbell size={24} aria-hidden="true" />, slug: 'sports' },
-  { name: 'Books', icon: <BookOpen size={24} aria-hidden="true" />, slug: 'books' },
-  { name: 'Toys', icon: <Gamepad2 size={24} aria-hidden="true" />, slug: 'toys' },
-  { name: 'Grocery', icon: <ShoppingBasket size={24} aria-hidden="true" />, slug: 'grocery' },
-  { name: 'Jewellery', icon: <Gem size={24} aria-hidden="true" />, slug: 'jewellery' },
-  { name: 'Footwear', icon: <Footprints size={24} aria-hidden="true" />, slug: 'footwear' },
+  { name: 'Fashion',     icon: <Shirt size={24} aria-hidden="true" />,      slug: 'fashion' },
+  { name: 'Footwear',   icon: <Footprints size={24} aria-hidden="true" />, slug: 'footwear' },
+  { name: 'Cosmetics',  icon: <Sparkles size={24} aria-hidden="true" />,   slug: 'cosmetics' },
+  { name: 'Electronics',icon: <Smartphone size={24} aria-hidden="true" />, slug: 'electronics' },
+  { name: 'Accessories',icon: <Sparkles size={24} aria-hidden="true" />,   slug: 'accessories' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -397,8 +387,8 @@ export default function SearchPage() {
     <main className="min-h-screen bg-gray-50">
       {/* ── Sticky search header ── */}
       <header className="sticky top-0 z-20 bg-white border-b border-gray-100 shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-3">
-          <div ref={searchBarContainerRef} className="relative">
+        <div className="px-4 py-3 lg:max-w-none">
+          <div ref={searchBarContainerRef} className="relative max-w-2xl mx-auto lg:mx-0">
             <SearchBar
               value={inputValue}
               onChange={setInputValue}
@@ -424,8 +414,8 @@ export default function SearchPage() {
 
           {/* Active query chip */}
           {isSearchMode && (
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-medium">
+            <div className="flex items-center gap-2 mt-2 flex-wrap max-w-2xl mx-auto lg:mx-0">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand/10 text-brand text-xs font-medium">
                 <Search size={10} aria-hidden="true" />
                 {urlQuery}
                 <button
@@ -435,7 +425,7 @@ export default function SearchPage() {
                     setInputValue('')
                     router.push('/search')
                   }}
-                  className="ml-0.5 hover:text-blue-900"
+                  className="ml-0.5 hover:text-brand-dark"
                 >
                   <X size={10} aria-hidden="true" />
                 </button>
@@ -451,34 +441,50 @@ export default function SearchPage() {
         </div>
       </header>
 
-      {/* ── Page content ── */}
-      <div className="max-w-2xl mx-auto">
-        {isSearchMode ? (
-          /* Search mode — show results */
-          <div className="px-4 py-4">
-            <SearchResults
-              query={urlQuery}
-              minPrice={urlFilters.minPrice || undefined}
-              maxPrice={urlFilters.maxPrice || undefined}
-              categories={urlFilters.categories.length > 0 ? urlFilters.categories : undefined}
-              minRating={urlFilters.minRating > 0 ? urlFilters.minRating : undefined}
-              sort={urlFilters.sort !== 'relevance' ? urlFilters.sort : undefined}
-              onResultCountChange={handleResultCountChange}
-            />
-          </div>
-        ) : (
-          /* Browse mode — category grid (Req 8.1) */
-          <BrowseMode onCategorySelect={handleCategorySelect} />
-        )}
+      {/* ── Page content: desktop two-panel layout (Req 10.2, 10.3) ── */}
+      <div className="lg:flex lg:gap-0">
+        {/* Desktop filter sidebar — hidden on mobile, visible on lg+ */}
+        <aside
+          className="hidden lg:block w-60 xl:w-72 shrink-0 border-r border-gray-200 bg-white sticky top-[57px] self-start min-h-[calc(100vh-57px)] overflow-y-auto"
+          aria-label="Search filters"
+        >
+          <FilterPanel
+            filters={urlFilters}
+            onFiltersChange={handleFiltersChange}
+          />
+        </aside>
+
+        {/* Results area — takes remaining space */}
+        <div className="flex-1 min-w-0">
+          {isSearchMode ? (
+            /* Search mode — show results */
+            <div className="px-4 py-4">
+              <SearchResults
+                query={urlQuery}
+                minPrice={urlFilters.minPrice || undefined}
+                maxPrice={urlFilters.maxPrice || undefined}
+                categories={urlFilters.categories.length > 0 ? urlFilters.categories : undefined}
+                minRating={urlFilters.minRating > 0 ? urlFilters.minRating : undefined}
+                sort={urlFilters.sort !== 'relevance' ? urlFilters.sort : undefined}
+                onResultCountChange={handleResultCountChange}
+              />
+            </div>
+          ) : (
+            /* Browse mode — category grid (Req 8.1) */
+            <BrowseMode onCategorySelect={handleCategorySelect} />
+          )}
+        </div>
       </div>
 
-      {/* ── Filter sheet (Req 8.8) ── */}
-      <FilterSheet
-        isOpen={isFilterOpen}
-        onClose={() => setIsFilterOpen(false)}
-        filters={urlFilters}
-        onFiltersChange={handleFiltersChange}
-      />
+      {/* ── Filter sheet — mobile only (< lg) (Req 10.3) ── */}
+      <div className="lg:hidden">
+        <FilterSheet
+          isOpen={isFilterOpen}
+          onClose={() => setIsFilterOpen(false)}
+          filters={urlFilters}
+          onFiltersChange={handleFiltersChange}
+        />
+      </div>
     </main>
   )
 }

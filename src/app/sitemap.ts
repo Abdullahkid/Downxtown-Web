@@ -2,6 +2,9 @@
  * Dynamic sitemap — fetches all published store usernames and active product IDs
  * from the backend and returns a Next.js MetadataRoute.Sitemap array.
  *
+ * Store pages get priority 0.9 (highest after homepage) because they are the
+ * primary SEO target — we want Google to index and rank them like profile pages.
+ *
  * Revalidated every 24 hours via ISR.
  *
  * Requirements: 21.2, 21.3
@@ -38,19 +41,46 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ? ((await productsRes.value.json()) as SitemapProductsResponse).ids ?? []
       : []
 
+  const now = new Date()
+
+  // Static pages
+  const staticEntries: MetadataRoute.Sitemap = [
+    {
+      url: SITE_URL,
+      lastModified: now,
+      changeFrequency: 'daily',
+      priority: 1.0,
+    },
+    {
+      url: `${SITE_URL}/search`,
+      lastModified: now,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    },
+    {
+      url: `${SITE_URL}/welcome`,
+      lastModified: now,
+      changeFrequency: 'monthly',
+      priority: 0.5,
+    },
+  ]
+
+  // Store profile pages — highest priority after homepage.
+  // These are the pages we want Google to surface like Instagram profiles.
   const storeEntries: MetadataRoute.Sitemap = storeUsernames.map((username) => ({
     url: `${SITE_URL}/store/${username}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily',
-    priority: 0.8,
+    lastModified: now,
+    changeFrequency: 'daily' as const,
+    priority: 0.9,
   }))
 
+  // Product pages
   const productEntries: MetadataRoute.Sitemap = productIds.map((id) => ({
     url: `${SITE_URL}/product/${id}`,
-    lastModified: new Date(),
-    changeFrequency: 'daily',
+    lastModified: now,
+    changeFrequency: 'daily' as const,
     priority: 0.7,
   }))
 
-  return [...storeEntries, ...productEntries]
+  return [...staticEntries, ...storeEntries, ...productEntries]
 }

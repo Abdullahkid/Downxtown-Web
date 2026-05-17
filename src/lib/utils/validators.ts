@@ -1,5 +1,5 @@
 /**
- * Validation utilities for the DownXtown Web Buyer App.
+ * Validation utilities for the Downxtown Web Buyer App.
  * Requirements: 3.4, 3.5, 28.7
  */
 

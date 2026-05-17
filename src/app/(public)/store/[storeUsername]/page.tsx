@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!store) {
     return {
-      title: 'Store not found — DownXtown',
+      title: 'Store not found — Downxtown',
       robots: { index: false, follow: false },
     }
   }
@@ -121,24 +121,51 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 // ---------------------------------------------------------------------------
-// Schema.org LocalBusiness JSON-LD
+// Schema.org JSON-LD — two graphs: ProfilePage + LocalBusiness
 // ---------------------------------------------------------------------------
 
+/**
+ * Builds a JSON-LD script with two linked Schema.org entities:
+ *
+ * 1. ProfilePage — tells Google this URL is a profile page for a named entity.
+ *    This is the same schema Instagram, LinkedIn, and Twitter use, and is what
+ *    triggers the "profile card" appearance in Google Search results.
+ *
+ * 2. LocalBusiness — describes the store as a real-world business entity with
+ *    name, address, phone, rating, and logo. Google uses this for Knowledge
+ *    Panel and local search features.
+ *
+ * The two entities are linked via mainEntity / mainEntityOfPage so Google
+ * understands they describe the same thing.
+ */
 function buildJsonLd(store: StoreProfile): string {
   const siteUrl = 'https://downxtown.com'
   const apiBase = 'https://api.downxtown.com'
+  const storeUrl = `${siteUrl}/store/${store.storeUsername}`
+  const logoUrl = store.logoImageId
+    ? `${apiBase}/get-display-image/${store.logoImageId}`
+    : undefined
 
-  const jsonLd: Record<string, unknown> = {
-    '@context': 'https://schema.org',
+  // Build sameAs array — links this entity to other known identifiers.
+  // Google uses sameAs to connect the entity across the web.
+  const sameAs: string[] = []
+  if (store.whatsappNumber) {
+    sameAs.push(`https://wa.me/${store.whatsappNumber.replace(/\D/g, '')}`)
+  }
+
+  // LocalBusiness entity — the store itself
+  const localBusiness: Record<string, unknown> = {
     '@type': 'LocalBusiness',
+    '@id': `${storeUrl}#business`,
     name: store.storeName,
-    url: `${siteUrl}/store/${store.storeUsername}`,
-    ...(store.logoImageId
-      ? { logo: `${apiBase}/get-display-image/${store.logoImageId}` }
-      : {}),
+    url: storeUrl,
+    ...(logoUrl ? { logo: logoUrl, image: logoUrl } : {}),
     ...(store.description ? { description: store.description } : {}),
-    ...(store.city ? { address: { '@type': 'PostalAddress', addressLocality: store.city } } : {}),
+    ...(store.city
+      ? { address: { '@type': 'PostalAddress', addressLocality: store.city } }
+      : {}),
     ...(store.phoneNumber ? { telephone: store.phoneNumber } : {}),
+    ...(sameAs.length > 0 ? { sameAs } : {}),
     ...(store.averageRating > 0
       ? {
           aggregateRating: {
@@ -152,7 +179,30 @@ function buildJsonLd(store: StoreProfile): string {
       : {}),
   }
 
-  return JSON.stringify(jsonLd)
+  // ProfilePage entity — the web page that represents the store's profile.
+  // This is the key schema that triggers the Instagram-style card in Google.
+  const profilePage: Record<string, unknown> = {
+    '@type': 'ProfilePage',
+    '@id': `${storeUrl}#profile`,
+    url: storeUrl,
+    name: `${store.storeName} (@${store.storeUsername})`,
+    // mainEntity links the ProfilePage to the LocalBusiness it describes
+    mainEntity: { '@id': `${storeUrl}#business` },
+    ...(logoUrl
+      ? {
+          image: {
+            '@type': 'ImageObject',
+            url: logoUrl,
+            description: `${store.storeName} logo`,
+          },
+        }
+      : {}),
+  }
+
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [profilePage, localBusiness],
+  })
 }
 
 // ---------------------------------------------------------------------------

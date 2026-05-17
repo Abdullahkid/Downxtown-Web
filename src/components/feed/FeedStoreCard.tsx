@@ -15,7 +15,7 @@
 
 import React, { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Star, UserPlus, UserCheck } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { ImageLoader } from '@/components/shared'
 import { MiniProductCard } from './MiniProductCard'
 import { api } from '@/lib/api/apiClient'
@@ -100,7 +100,7 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
             />
           )
         })}
-        <span className="ml-1 text-xs text-gray-500">{rating.toFixed(1)}</span>
+        <span className="ml-1 text-xs text-text-3">{rating.toFixed(1)}</span>
       </div>
     )
   }
@@ -108,26 +108,27 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
   return (
     <article
       className={[
-        'bg-white rounded-2xl shadow-sm border border-gray-100',
-        'overflow-hidden',
+        'bg-bg-3 rounded-[16px] shadow-sm border border-border',
+        'overflow-hidden transition-all duration-200',
+        'hover:border-border-accent hover:-translate-y-[2px] relative group'
       ].join(' ')}
       aria-label={`${store.storeName} store card`}
     >
+      {/* Glow effect on hover */}
+      <div className="absolute inset-0 rounded-[16px] bg-gradient-to-br from-brand/5 to-brand-accent/5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity" />
+
+      {/* Brand Cover Placeholder */}
+      <div className="h-[100px] bg-bg-4 relative overflow-hidden pattern-2">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent to-bg-3/80" />
+      </div>
+
       {/* ------------------------------------------------------------------ */}
       {/* Store header — tappable (Req 7.7)                                   */}
-      {/* Use a div with role="button" so we can nest a real <button> inside  */}
-      {/* for the follow action without invalid HTML (button-in-button).       */}
       {/* ------------------------------------------------------------------ */}
       <div
         role="button"
         tabIndex={0}
-        className={[
-          'w-full flex items-center gap-3 px-4 py-3',
-          'text-left hover:bg-gray-50 active:bg-gray-100',
-          'transition-colors cursor-pointer',
-          'focus-visible:outline focus-visible:outline-2',
-          'focus-visible:outline-offset-2 focus-visible:outline-blue-600',
-        ].join(' ')}
+        className="relative z-10 w-full flex items-start gap-3 px-4 pb-3"
         onClick={handleStoreClick}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -137,8 +138,8 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
         }}
         aria-label={`Visit ${store.storeName} store`}
       >
-        {/* Store logo */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-full overflow-hidden bg-white border border-gray-200">
+        {/* Store logo - overlapping cover */}
+        <div className="flex-shrink-0 w-[52px] h-[52px] rounded-[14px] overflow-hidden bg-white border-2 border-bg-3 -mt-[26px] p-[5px] flex items-center justify-center relative">
           <ImageLoader
             imageId={store.storeLogo}
             endpoint="display"
@@ -148,15 +149,21 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
             objectFit="contain"
             sizes="48px"
           />
+          {/* Fallback if no image */}
+          {!store.storeLogo && (
+             <span className="font-display text-lg text-brand uppercase tracking-wider">
+               {store.storeName.substring(0, 2)}
+             </span>
+          )}
         </div>
 
         {/* Store info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-gray-900 truncate">
+        <div className="flex-1 min-w-0 pt-2">
+          <p className="text-[16px] font-semibold text-text-1 truncate">
             {store.storeName}
           </p>
-          <p className="text-xs text-gray-500 truncate">@{store.storeUsername}</p>
-          <div className="mt-0.5">{renderStars(store.storeRating)}</div>
+          <p className="text-[12px] text-text-3 truncate mt-0.5">@{store.storeUsername}</p>
+          <div className="mt-1">{renderStars(store.storeRating)}</div>
         </div>
 
         {/* Follow / Unfollow button (Req 7.10, 7.11) */}
@@ -167,27 +174,21 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
           disabled={isFollowLoading}
           onClick={handleFollowToggle}
           className={[
-            'flex-shrink-0 flex items-center gap-1.5',
-            'min-h-[36px] px-3 py-1.5 rounded-full text-xs font-semibold',
-            'border transition-colors',
+            'flex-shrink-0 flex items-center gap-1.5 mt-2',
+            'px-4 py-[7px] rounded-full text-[12px] font-semibold tracking-wide font-sans',
+            'border transition-colors whitespace-nowrap',
             'focus-visible:outline focus-visible:outline-2',
-            'focus-visible:outline-offset-2 focus-visible:outline-blue-600',
+            'focus-visible:outline-offset-2 focus-visible:outline-brand',
             'disabled:opacity-60 disabled:cursor-not-allowed',
             isFollowing
-              ? 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
-              : 'bg-blue-600 border-blue-600 text-white hover:bg-blue-700',
+              ? 'bg-brand border-brand text-white'
+              : 'bg-transparent border-border-accent text-brand hover:bg-brand-accent/10',
           ].join(' ')}
         >
           {isFollowing ? (
-            <>
-              <UserCheck size={13} aria-hidden="true" />
-              Following
-            </>
+            'Following'
           ) : (
-            <>
-              <UserPlus size={13} aria-hidden="true" />
-              Follow
-            </>
+            'Follow'
           )}
         </button>
       </div>
@@ -197,14 +198,14 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
       {/* ------------------------------------------------------------------ */}
       {store.recentProducts.length > 0 ? (
         <div
-          className="px-4 pb-4"
+          className="pb-4 relative z-10"
           role="region"
           aria-label={`${store.storeName} recent products`}
         >
           <div
             className={[
-              'flex gap-3 overflow-x-auto',
-              'scrollbar-hide pb-1',
+              'flex gap-3 px-4 pb-1 overflow-x-auto',
+              'scrollbar-hide',
               // Smooth momentum scrolling on iOS
               '[&]:[-webkit-overflow-scrolling:touch]',
             ].join(' ')}
@@ -216,7 +217,7 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
         </div>
       ) : (
         <div className="px-4 pb-4">
-          <p className="text-xs text-gray-400 italic">No products yet</p>
+          <p className="text-[12px] text-text-3 italic">No products yet</p>
         </div>
       )}
     </article>

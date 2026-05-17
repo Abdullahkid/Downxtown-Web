@@ -50,9 +50,9 @@ export function ErrorState({
           className={[
             'inline-flex items-center justify-center',
             'min-h-[44px] min-w-[44px] px-5 py-2.5',
-            'rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-700',
-            'hover:bg-gray-50 active:bg-gray-100',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400',
+            'rounded-lg bg-brand text-sm font-medium text-white',
+            'hover:bg-brand-dark active:bg-brand-dark',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand',
             'transition-colors',
           ].join(' ')}
           aria-label="Retry"

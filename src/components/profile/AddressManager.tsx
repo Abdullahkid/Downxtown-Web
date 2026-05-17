@@ -18,6 +18,7 @@ import { MapPin, Plus, Pencil, Trash2, X, Check, Loader2 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { api, ApiError } from '@/lib/api/apiClient'
 import { validateAddress } from '@/lib/utils/validators'
+import { Button } from '@/components/ui'
 import type { Address } from '@/types/user'
 
 // ---------------------------------------------------------------------------
@@ -617,9 +618,22 @@ export function AddressManager({ onAddressChanged }: AddressManagerProps) {
       {!showForm && (
         <>
           {addresses.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-6">
-              No saved addresses yet.
-            </p>
+            <div className="flex flex-col items-center gap-4 py-10 text-center">
+              <MapPin
+                size={48}
+                strokeWidth={1.5}
+                className="text-gray-300"
+                aria-hidden="true"
+              />
+              <p className="text-sm text-gray-500">No addresses saved yet</p>
+              <Button
+                variant="secondary"
+                onClick={handleAdd}
+                disabled={deleting}
+              >
+                Add Address
+              </Button>
+            </div>
           ) : (
             <ul className="space-y-3" aria-label="Saved addresses">
               {addresses.map((addr) => (

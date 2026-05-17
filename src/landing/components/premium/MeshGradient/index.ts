@@ -1,0 +1,2 @@
+export { MeshGradient } from "./MeshGradient"
+

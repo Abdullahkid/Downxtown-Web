@@ -1,5 +1,5 @@
 /**
- * Custom Service Worker — DownXtown Web Buyer App
+ * Custom Service Worker — Downxtown Web Buyer App
  *
  * This file extends the Workbox-generated service worker produced by
  * @ducanh2912/next-pwa. It adds:
@@ -51,10 +51,10 @@ self.addEventListener('push', (event: PushEvent) => {
     payload = event.data.json()
   } catch {
     // Fallback: treat the raw text as the notification body
-    payload = { title: 'DownXtown', body: event.data.text() }
+    payload = { title: 'Downxtown', body: event.data.text() }
   }
 
-  const title = payload.title ?? 'DownXtown'
+  const title = payload.title ?? 'Downxtown'
   const options: NotificationOptions = {
     body: payload.body ?? '',
     icon: payload.icon ?? '/icons/icon-192.png',

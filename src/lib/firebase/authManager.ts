@@ -1,7 +1,7 @@
 /**
  * Auth Manager — wraps Firebase Auth Web SDK v10 (modular).
  *
- * Implements all authentication methods required by the DownXtown Web Buyer App:
+ * Implements all authentication methods required by the Downxtown Web Buyer App:
  *   - Google OAuth (signInWithPopup)
  *   - Email/Password sign-in and registration
  *   - Email verification
@@ -20,6 +20,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
+  signInWithCustomToken as firebaseSignInWithCustomToken,
   createUserWithEmailAndPassword,
   sendEmailVerification as firebaseSendEmailVerification,
   signInWithPhoneNumber,
@@ -48,6 +49,9 @@ export interface AuthManager {
 
   /** Sign in with email and password. */
   signInWithEmailPassword(email: string, password: string): Promise<UserCredential>
+
+  /** Sign in with a backend-issued Firebase custom token. */
+  signInWithCustomToken(token: string): Promise<UserCredential>
 
   /** Register a new account with email and password. */
   registerWithEmail(email: string, password: string): Promise<UserCredential>
@@ -136,6 +140,10 @@ class AuthManagerImpl implements AuthManager {
     password: string,
   ): Promise<UserCredential> {
     return signInWithEmailAndPassword(this.auth, email, password)
+  }
+
+  async signInWithCustomToken(token: string): Promise<UserCredential> {
+    return firebaseSignInWithCustomToken(this.auth, token)
   }
 
   async registerWithEmail(

@@ -139,7 +139,7 @@ export function StoreHeader({ store }: StoreHeaderProps) {
     const url = `https://downxtown.com/store/${store.storeUsername}`
     const shareData = {
       title: store.storeName,
-      text: `Check out ${store.storeName} on DownXtown`,
+      text: `Check out ${store.storeName} on Downxtown`,
       url,
     }
 

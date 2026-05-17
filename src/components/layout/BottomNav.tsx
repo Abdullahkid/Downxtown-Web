@@ -32,7 +32,7 @@ export function BottomNav() {
     <nav
       role="navigation"
       aria-label="Main navigation"
-      className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-stretch border-t border-gray-200 bg-white md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-stretch border-t border-border bg-bg-2 lg:hidden"
     >
       {TABS.map(({ href, label, icon: Icon }) => {
         const isActive =
@@ -52,8 +52,8 @@ export function BottomNav() {
               'min-h-[44px] min-w-[44px]',
               'text-xs font-medium transition-colors',
               isActive
-                ? 'text-[var(--brand-color,#6366f1)]'
-                : 'text-gray-500 hover:text-gray-800',
+                ? 'text-brand-accent'
+                : 'text-text-2 hover:text-text-1',
             ].join(' ')}
           >
             {/* Icon with optional unread badge */}
@@ -68,7 +68,7 @@ export function BottomNav() {
                   aria-hidden="true"
                   className={[
                     'absolute -right-1.5 -top-1.5 flex items-center justify-center',
-                    'rounded-full bg-red-500 text-white',
+                    'rounded-full bg-brand-accent text-black',
                     unreadChatCount > 9
                       ? 'h-4 min-w-[1rem] px-0.5 text-[9px]'
                       : 'h-3.5 w-3.5 text-[9px]',

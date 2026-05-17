@@ -20,7 +20,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Loader2, ShoppingBag, AlertCircle, ArrowLeft } from 'lucide-react'
+import { Loader2, ShoppingBag, AlertCircle } from 'lucide-react'
 import { api, ApiError } from '@/lib/api/apiClient'
 import { useAuthStore } from '@/store/authStore'
 import { logOrderPlaced } from '@/lib/analytics/analyticsProvider'
@@ -30,6 +30,7 @@ import {
   AddressDisplay,
   PaymentSelector,
 } from '@/components/checkout'
+import { ErrorState } from '@/components/shared'
 import type { Product, ProductVariant } from '@/types/product'
 import type { Address, Personal } from '@/types/user'
 import type { InitiatePaymentResponse } from '@/types/checkout'
@@ -204,7 +205,7 @@ export default function CheckoutPage() {
           amount: paymentResponse.amountInPaise,
           currency: paymentResponse.currency,
           order_id: paymentResponse.razorpayOrderId,
-          name: 'DownXtown',
+          name: 'Downxtown',
           prefill: {
             name: user.name,
             email: user.email,
@@ -351,14 +352,7 @@ export default function CheckoutPage() {
   // Render: loading
   // -------------------------------------------------------------------------
   if (isLoading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="flex flex-col items-center gap-3 text-gray-500">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" aria-hidden="true" />
-          <p className="text-sm">Loading checkout…</p>
-        </div>
-      </main>
-    )
+    return <CheckoutSkeleton />
   }
 
   // -------------------------------------------------------------------------
@@ -367,22 +361,10 @@ export default function CheckoutPage() {
   if (loadError || !product || !variant) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-        <div className="max-w-sm w-full text-center space-y-4">
-          <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto">
-            <AlertCircle className="w-8 h-8 text-red-500" aria-hidden="true" />
-          </div>
-          <h1 className="text-lg font-semibold text-gray-900">
-            {loadError ?? 'Something went wrong'}
-          </h1>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" aria-hidden="true" />
-            Go Back
-          </button>
-        </div>
+        <ErrorState
+          message={loadError ?? 'Something went wrong'}
+          onRetry={() => router.back()}
+        />
       </main>
     )
   }
@@ -397,22 +379,10 @@ export default function CheckoutPage() {
     (paymentMethod === 'ONLINE' || product.isCodAllowed)
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="p-2 -ml-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="w-5 h-5" aria-hidden="true" />
-        </button>
-        <h1 className="text-base font-bold text-gray-900">Checkout</h1>
-      </header>
-
-      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 pb-32">
-        {/* Order Summary (Req 11.1, 11.7) */}
+    <div className="min-h-screen bg-gray-50 pb-32">
+      {/* Two-column layout on desktop: order summary left, address + payment right */}
+      <div className="lg:grid lg:grid-cols-[1fr_1fr] lg:gap-8 lg:items-start">
+        {/* Left column: Order Summary (Req 11.1, 11.7) */}
         <Section title="Order Summary">
           <OrderSummary
             product={product}
@@ -423,59 +393,62 @@ export default function CheckoutPage() {
           />
         </Section>
 
-        {/* Delivery Address (Req 11.2, 11.3, 11.4) */}
-        <Section title="Delivery Address">
-          {isEditingAddress || !address ? (
-            <AddressForm
-              initialAddress={address}
-              onSaved={(saved) => {
-                setAddress(saved)
-                setIsEditingAddress(false)
-              }}
-              onCancel={() => {
-                if (address) setIsEditingAddress(false)
-              }}
-            />
-          ) : (
-            <AddressDisplay
-              address={address}
-              onEdit={() => setIsEditingAddress(true)}
-            />
-          )}
+        {/* Right column: Delivery Address + Payment stacked */}
+        <div className="space-y-5">
+          {/* Delivery Address (Req 11.2, 11.3, 11.4) */}
+          <Section title="Delivery Address">
+            {isEditingAddress || !address ? (
+              <AddressForm
+                initialAddress={address}
+                onSaved={(saved) => {
+                  setAddress(saved)
+                  setIsEditingAddress(false)
+                }}
+                onCancel={() => {
+                  if (address) setIsEditingAddress(false)
+                }}
+              />
+            ) : (
+              <AddressDisplay
+                address={address}
+                onEdit={() => setIsEditingAddress(true)}
+              />
+            )}
 
-          {!address && !isEditingAddress && (
-            <button
-              type="button"
-              onClick={() => setIsEditingAddress(true)}
-              className="mt-3 w-full px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            {!address && !isEditingAddress && (
+              <button
+                type="button"
+                onClick={() => setIsEditingAddress(true)}
+                className="mt-3 w-full px-4 py-3 rounded-xl border-2 border-dashed border-gray-300 text-sm font-medium text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+              >
+                + Add delivery address
+              </button>
+            )}
+          </Section>
+
+          {/* Payment Method (Req 11.6) */}
+          <Section title="Payment">
+            <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <PaymentSelector
+                value={paymentMethod}
+                onChange={setPaymentMethod}
+                isCodAllowed={product.isCodAllowed}
+                codFee={COD_FEE}
+              />
+            </div>
+          </Section>
+
+          {/* Submit error */}
+          {submitError && (
+            <div
+              role="alert"
+              className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl"
             >
-              + Add delivery address
-            </button>
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <p className="text-sm text-red-700">{submitError}</p>
+            </div>
           )}
-        </Section>
-
-        {/* Payment Method (Req 11.6) */}
-        <Section title="Payment">
-          <div className="bg-white rounded-2xl border border-gray-100 p-4">
-            <PaymentSelector
-              value={paymentMethod}
-              onChange={setPaymentMethod}
-              isCodAllowed={product.isCodAllowed}
-              codFee={COD_FEE}
-            />
-          </div>
-        </Section>
-
-        {/* Submit error */}
-        {submitError && (
-          <div
-            role="alert"
-            className="flex items-start gap-3 p-4 bg-red-50 border border-red-100 rounded-xl"
-          >
-            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="text-sm text-red-700">{submitError}</p>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Sticky bottom bar */}
@@ -525,6 +498,98 @@ export default function CheckoutPage() {
               Please add a delivery address to continue
             </p>
           )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton components (Req 4.1, 4.2, 4.3, 4.4, 4.6, 4.7)
+// ---------------------------------------------------------------------------
+
+function OrderSummarySkeleton() {
+  return (
+    <section className="bg-white rounded-2xl border border-gray-100 p-4 space-y-4">
+      {/* Section heading shimmer */}
+      <div className="shimmer h-3 w-28 rounded-full" />
+      {/* Product row: image + details */}
+      <div className="flex gap-3">
+        {/* Product image */}
+        <div className="shimmer w-20 h-20 rounded-xl flex-shrink-0" />
+        {/* Product details */}
+        <div className="flex-1 space-y-2 py-1">
+          <div className="shimmer h-3.5 w-3/4 rounded-full" />
+          <div className="shimmer h-3 w-1/2 rounded-full" />
+          <div className="shimmer h-3 w-1/3 rounded-full" />
+        </div>
+      </div>
+      {/* Price row */}
+      <div className="flex justify-between items-center pt-2 border-t border-gray-50">
+        <div className="shimmer h-3 w-16 rounded-full" />
+        <div className="shimmer h-4 w-20 rounded-full" />
+      </div>
+    </section>
+  )
+}
+
+function AddressSelectionSkeleton() {
+  return (
+    <section className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+      {/* Section heading shimmer */}
+      <div className="shimmer h-3 w-32 rounded-full" />
+      {/* Address row: icon + lines */}
+      <div className="flex gap-3 items-start">
+        <div className="shimmer w-8 h-8 rounded-lg flex-shrink-0" />
+        <div className="flex-1 space-y-2 py-1">
+          <div className="shimmer h-3.5 w-2/3 rounded-full" />
+          <div className="shimmer h-3 w-full rounded-full" />
+        </div>
+      </div>
+      {/* Edit button shimmer */}
+      <div className="shimmer h-9 w-24 rounded-xl" />
+    </section>
+  )
+}
+
+function PaymentMethodSkeleton() {
+  return (
+    <section className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+      {/* Section heading shimmer */}
+      <div className="shimmer h-3 w-24 rounded-full" />
+      {/* Radio row 1 */}
+      <div className="flex items-center gap-3 py-1">
+        <div className="shimmer w-5 h-5 rounded-full flex-shrink-0" />
+        <div className="shimmer h-3.5 w-32 rounded-full" />
+      </div>
+      {/* Radio row 2 */}
+      <div className="flex items-center gap-3 py-1">
+        <div className="shimmer w-5 h-5 rounded-full flex-shrink-0" />
+        <div className="shimmer h-3.5 w-40 rounded-full" />
+      </div>
+    </section>
+  )
+}
+
+function CheckoutSkeleton() {
+  return (
+    <main className="min-h-screen bg-gray-50">
+      {/* Header skeleton */}
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+        <div className="shimmer w-9 h-9 rounded-xl flex-shrink-0" />
+        <div className="shimmer h-4 w-20 rounded-full" />
+      </div>
+
+      {/* Content: two-column on desktop, single-column on mobile */}
+      <div className="max-w-2xl mx-auto px-4 py-6 space-y-5 lg:max-w-4xl lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+        {/* Left column on desktop: order summary */}
+        <div className="space-y-5">
+          <OrderSummarySkeleton />
+        </div>
+        {/* Right column on desktop: address + payment */}
+        <div className="space-y-5">
+          <AddressSelectionSkeleton />
+          <PaymentMethodSkeleton />
         </div>
       </div>
     </main>

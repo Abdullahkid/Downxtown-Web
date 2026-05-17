@@ -63,7 +63,7 @@ function ProductCard({ product }: { product: MiniProduct }) {
       type="button"
       onClick={() => router.push(`/product/${product.id}`)}
       className={[
-        'group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white',
+        'group flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white',
         'text-left shadow-sm hover:shadow-md active:scale-[0.98]',
         'transition-all duration-150',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-color,#6366f1)]',
@@ -89,12 +89,12 @@ function ProductCard({ product }: { product: MiniProduct }) {
       </div>
 
       {/* Product info */}
-      <div className="flex flex-col gap-0.5 p-2.5">
-        <p className="line-clamp-2 text-xs font-medium text-gray-800 leading-snug">
+      <div className="flex flex-1 flex-col gap-0.5 p-2.5">
+        <p className="line-clamp-2 min-h-[2.6em] text-xs font-medium text-gray-800 leading-snug">
           {product.name}
         </p>
 
-        <div className="flex items-baseline gap-1.5 mt-1">
+        <div className="mt-1 flex items-baseline gap-1.5">
           <span className="text-sm font-bold text-gray-900">
             {formatPrice(product.sellingPrice)}
           </span>
@@ -105,14 +105,16 @@ function ProductCard({ product }: { product: MiniProduct }) {
           )}
         </div>
 
-        {product.averageRating > 0 && (
-          <div className="flex items-center gap-0.5 mt-0.5">
-            <Star size={10} className="fill-amber-400 text-amber-400" aria-hidden="true" />
-            <span className="text-[10px] text-gray-500">
-              {product.averageRating.toFixed(1)}
-            </span>
-          </div>
-        )}
+        <div className="mt-auto pt-1">
+          {product.averageRating > 0 && (
+            <div className="flex items-center gap-0.5">
+              <Star size={10} className="fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="text-[10px] text-gray-500">
+                {product.averageRating.toFixed(1)}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </button>
   )
@@ -124,7 +126,7 @@ function ProductCard({ product }: { product: MiniProduct }) {
 
 function ProductGridShimmer() {
   return (
-    <div className="grid grid-cols-2 gap-3 px-4">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 px-4 justify-items-stretch">
       {Array.from({ length: 6 }, (_, i) => (
         <div key={i} className="flex flex-col gap-2">
           <ShimmerCard className="aspect-square w-full rounded-xl" />
@@ -217,7 +219,7 @@ export function StoreProductGrid({ storeId, storeUsername }: StoreProductGridPro
             aria-pressed={sort === chip.value}
             className={[
               'shrink-0 rounded-full px-4 py-1.5 text-sm font-medium',
-              'min-h-[36px] transition-colors',
+              'min-h-[44px] transition-colors',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
               sort === chip.value
                 ? 'bg-[var(--brand-color,#6366f1)] text-white focus-visible:outline-[var(--brand-color,#6366f1)]'
@@ -242,7 +244,7 @@ export function StoreProductGrid({ storeId, storeUsername }: StoreProductGridPro
             aria-pressed={activeCategory === null}
             className={[
               'shrink-0 rounded-full px-3 py-1 text-xs font-medium',
-              'min-h-[32px] transition-colors',
+              'min-h-[44px] transition-colors',
               'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
               activeCategory === null
                 ? 'bg-gray-900 text-white focus-visible:outline-gray-700'
@@ -259,7 +261,7 @@ export function StoreProductGrid({ storeId, storeUsername }: StoreProductGridPro
               aria-pressed={activeCategory === cat.id}
               className={[
                 'shrink-0 rounded-full px-3 py-1 text-xs font-medium',
-                'min-h-[32px] transition-colors',
+                'min-h-[44px] transition-colors',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
                 activeCategory === cat.id
                   ? 'bg-gray-900 text-white focus-visible:outline-gray-700'
@@ -291,9 +293,9 @@ export function StoreProductGrid({ storeId, storeUsername }: StoreProductGridPro
       ) : (
         <>
           {/* Staggered 2-column grid */}
-          <div className="grid grid-cols-2 gap-3 px-4">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 px-4 items-stretch justify-items-stretch">
             {allProducts.map((product, index) => (
-              <div key={product.id}>
+              <div key={product.id} className="w-full">
                 <ProductCard product={product} />
               </div>
             ))}
@@ -304,7 +306,7 @@ export function StoreProductGrid({ storeId, storeUsername }: StoreProductGridPro
 
           {/* Loading more indicator */}
           {isFetchingNextPage && (
-            <div className="mt-4 grid grid-cols-2 gap-3 px-4">
+            <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 px-4 justify-items-stretch">
               {Array.from({ length: 2 }, (_, i) => (
                 <div key={i} className="flex flex-col gap-2">
                   <ShimmerCard className="aspect-square w-full rounded-xl" />

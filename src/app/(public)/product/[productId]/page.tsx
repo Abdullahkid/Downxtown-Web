@@ -15,7 +15,7 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import type { Product, MiniProduct } from '@/types/product'
+import type { Product, MiniProduct, ImageGroup } from '@/types/product'
 import { buildProductUrl, formatPrice } from '@/lib/utils/urlBuilders'
 import { buildImageUrl } from '@/lib/image/imageUrls'
 import { ProductPageClient } from './ProductPageClient'
@@ -75,7 +75,7 @@ async function fetchProduct(productId: string): Promise<Product | null> {
       brandName: dto.brandName ?? '',
       description: dto.description,
       keyFeatures: dto.keyFeatures,
-      imageGroups: dto.imageGroups ?? [],
+      imageGroups: (dto.imageGroups ?? []) as ImageGroup[],
       variants: dto.variants.map(v => ({
         id: v.variantId,
         attributes: v.attributes,
@@ -122,7 +122,7 @@ export async function generateMetadata({
 
   if (!product) {
     return {
-      title: 'Product Not Found — DownXtown',
+      title: 'Product Not Found — Downxtown',
       robots: { index: false, follow: false },
     }
   }
@@ -148,7 +148,7 @@ export async function generateMetadata({
     .join(' — ')
 
   return {
-    title: `${product.name} — DownXtown`,
+    title: `${product.name} — Downxtown`,
     description,
     // Req 21.3 — index, follow on public product pages
     robots: {
@@ -165,7 +165,7 @@ export async function generateMetadata({
       url: canonicalUrl,
       title: product.name,
       description,
-      siteName: 'DownXtown',
+      siteName: 'Downxtown',
       images: ogImageUrl
         ? [
             {

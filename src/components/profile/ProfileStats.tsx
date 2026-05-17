@@ -73,6 +73,15 @@ export function ProfileStats({ onImageUploaded }: ProfileStatsProps) {
 
   if (!user) return null
 
+  const toDisplayNumber = (value: unknown): number => {
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value)
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+    return 0
+  }
+
   const stats = [
     {
       label: 'Following',
@@ -191,7 +200,7 @@ export function ProfileStats({ onImageUploaded }: ProfileStatsProps) {
           >
             <div className="text-blue-600">{icon}</div>
             <span className="text-lg font-bold text-gray-900 leading-none">
-              {value.toLocaleString('en-IN')}
+              {toDisplayNumber(value).toLocaleString('en-IN')}
             </span>
             <span className="text-xs text-gray-500">{label}</span>
           </div>

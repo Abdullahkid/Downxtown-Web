@@ -24,8 +24,8 @@ export function PageShell({ children, className = '' }: PageShellProps) {
         className={[
           'sr-only focus:not-sr-only',
           'focus:fixed focus:left-4 focus:top-4 focus:z-[100]',
-          'focus:rounded-md focus:bg-white focus:px-4 focus:py-2',
-          'focus:text-sm focus:font-medium focus:text-gray-900',
+          'focus:rounded-md focus:bg-bg-2 focus:px-4 focus:py-2',
+          'focus:text-sm focus:font-medium focus:text-text-1',
           'focus:shadow-lg focus:ring-2 focus:ring-[var(--brand-color,#6366f1)]',
           'focus:outline-none',
         ].join(' ')}
@@ -44,7 +44,7 @@ export function PageShell({ children, className = '' }: PageShellProps) {
           // Top offset for sticky AppBar (56px mobile / 64px desktop)
           'pt-14 md:pt-16',
           // Bottom offset so content isn't hidden behind BottomNav on mobile
-          'pb-20 md:pb-6',
+          'pb-20 lg:pb-6',
           className,
         ].join(' ')}
       >

@@ -10,6 +10,7 @@
  */
 
 import type { Metadata, Viewport } from 'next'
+import { DM_Sans, Bebas_Neue, DM_Serif_Display, Archivo } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
@@ -17,18 +18,51 @@ import { OfflineBanner } from '@/components/shared/OfflineBanner'
 import './globals.css'
 
 // ---------------------------------------------------------------------------
+// Fonts
+// ---------------------------------------------------------------------------
+
+const dmSans = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-dm-sans',
+  display: 'swap',
+})
+
+const bebasNeue = Bebas_Neue({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-bebas-neue',
+  display: 'swap',
+})
+
+const dmSerifDisplay = DM_Serif_Display({
+  subsets: ['latin'],
+  weight: ['400'],
+  variable: '--font-dm-serif',
+  display: 'swap',
+})
+
+// Archivo — used by the landing page (Downxtown-Website brand font)
+const archivo = Archivo({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-archivo',
+  display: 'swap',
+})
+
+// ---------------------------------------------------------------------------
 // PWA + SEO metadata
 // ---------------------------------------------------------------------------
 
 export const metadata: Metadata = {
-  title: 'DownXtown',
+  title: 'Downxtown',
   description: 'Discover local stores and products near you',
   // Links <link rel="manifest" href="/manifest.json"> in the <head>
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'DownXtown',
+    title: 'Downxtown',
   },
 }
 
@@ -49,7 +83,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${dmSans.variable} ${bebasNeue.variable} ${dmSerifDisplay.variable} ${archivo.variable}`}>
       <body suppressHydrationWarning>
         {/*
          * ErrorBoundary is outermost so it catches errors from any provider

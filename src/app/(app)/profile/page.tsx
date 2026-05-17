@@ -17,9 +17,8 @@
 
 import React, { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import {
-  ChevronDown,
-  ChevronUp,
   Bell,
   BellOff,
   LogOut,
@@ -39,52 +38,13 @@ import type { Personal } from '@/types/user'
 // Types
 // ---------------------------------------------------------------------------
 
-type Section = 'edit' | 'address' | 'wishlist' | 'notifications' | null
+type Section = 'edit' | null
 
 interface EditFormState {
   name: string
   username: string
   gender: 'MALE' | 'FEMALE' | 'OTHER' | ''
   dateOfBirth: string
-}
-
-// ---------------------------------------------------------------------------
-// SectionToggle — collapsible section header
-// ---------------------------------------------------------------------------
-
-interface SectionToggleProps {
-  label: string
-  open: boolean
-  onToggle: () => void
-  icon?: React.ReactNode
-}
-
-function SectionToggle({ label, open, onToggle, icon }: SectionToggleProps) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={open}
-      className={[
-        'w-full flex items-center justify-between',
-        'min-h-[52px] px-4 py-3 rounded-xl',
-        'bg-white border border-gray-200',
-        'text-sm font-semibold text-gray-800',
-        'hover:bg-gray-50 transition-colors',
-        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
-      ].join(' ')}
-    >
-      <span className="flex items-center gap-2">
-        {icon}
-        {label}
-      </span>
-      {open ? (
-        <ChevronUp size={18} className="text-gray-400" aria-hidden="true" />
-      ) : (
-        <ChevronDown size={18} className="text-gray-400" aria-hidden="true" />
-      )}
-    </button>
-  )
 }
 
 // ---------------------------------------------------------------------------
@@ -380,13 +340,6 @@ export default function ProfilePage() {
   }, [setWishlistCount, setCartCount])
 
   // -------------------------------------------------------------------------
-  // Section toggle
-  // -------------------------------------------------------------------------
-  const toggleSection = useCallback((section: Section) => {
-    setActiveSection((prev) => (prev === section ? null : section))
-  }, [])
-
-  // -------------------------------------------------------------------------
   // Sign out (Req 16.10)
   // -------------------------------------------------------------------------
   const handleSignOut = useCallback(async () => {
@@ -435,145 +388,157 @@ export default function ProfilePage() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-24">
-      {/* ------------------------------------------------------------------ */}
-      {/* Profile stats header                                                */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="bg-white border-b border-gray-100">
-        <ProfileStats onImageUploaded={refreshUser} />
+      <div className="px-4 py-4 max-w-5xl mx-auto">
+        {/* ---------------------------------------------------------------- */}
+        {/* Two-column desktop layout (Requirements 6.11, 6.12)              */}
+        {/* ---------------------------------------------------------------- */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
 
-        {/* Edit Profile toggle */}
-        <div className="px-4 pb-4">
-          <button
-            type="button"
-            onClick={() => toggleSection('edit')}
-            aria-expanded={activeSection === 'edit'}
-            className={[
-              'w-full min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold',
-              'border transition-colors',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
-              activeSection === 'edit'
-                ? 'bg-blue-600 text-white border-blue-600'
-                : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50',
-            ].join(' ')}
-          >
-            {activeSection === 'edit' ? 'Cancel Editing' : 'Edit Profile'}
-          </button>
-        </div>
+          {/* ============================================================== */}
+          {/* LEFT COLUMN — Profile stats + Edit form                        */}
+          {/* ============================================================== */}
+          <div>
+            {/* Profile stats header */}
+            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-4">
+              <ProfileStats onImageUploaded={refreshUser} />
 
-        {/* Inline edit form (Req 16.2) */}
-        {activeSection === 'edit' && (
-          <div className="border-t border-gray-100">
-            <EditProfileForm
-              user={user}
-              onSaved={() => {
-                setActiveSection(null)
-                refreshUser()
-              }}
-              onCancel={() => setActiveSection(null)}
-            />
+              {/* Edit Profile toggle */}
+              <div className="px-4 pb-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveSection((prev) => (prev === 'edit' ? null : 'edit'))}
+                  aria-expanded={activeSection === 'edit'}
+                  className={[
+                    'w-full min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold',
+                    'border transition-colors',
+                    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
+                    activeSection === 'edit'
+                      ? 'bg-blue-600 text-white border-blue-600'
+                      : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50',
+                  ].join(' ')}
+                >
+                  {activeSection === 'edit' ? 'Cancel Editing' : 'Edit Profile'}
+                </button>
+              </div>
+
+              {/* Inline edit form (Req 16.2) */}
+              {activeSection === 'edit' && (
+                <div className="border-t border-gray-100">
+                  <EditProfileForm
+                    user={user}
+                    onSaved={() => {
+                      setActiveSection(null)
+                      refreshUser()
+                    }}
+                    onCancel={() => setActiveSection(null)}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Danger zone — sign out + delete account */}
+            <div className="rounded-xl overflow-hidden border border-gray-200 bg-white divide-y divide-gray-100">
+
+              {/* Sign Out (Req 16.10) */}
+              <button
+                type="button"
+                onClick={handleSignOut}
+                disabled={signingOut || deletingAccount}
+                className={[
+                  'w-full flex items-center gap-3 px-4 py-4',
+                  'text-sm font-medium text-gray-700',
+                  'hover:bg-gray-50 transition-colors',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
+                  'disabled:opacity-50',
+                ].join(' ')}
+              >
+                {signingOut ? (
+                  <Loader2 size={18} className="animate-spin text-gray-400" aria-hidden="true" />
+                ) : (
+                  <LogOut size={18} className="text-gray-400" aria-hidden="true" />
+                )}
+                {signingOut ? 'Signing out…' : 'Sign Out'}
+              </button>
+
+              {/* Account Deletion (Req 16.11) */}
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={signingOut || deletingAccount}
+                className={[
+                  'w-full flex items-center gap-3 px-4 py-4',
+                  'text-sm font-medium text-red-600',
+                  'hover:bg-red-50 transition-colors',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500',
+                  'disabled:opacity-50',
+                ].join(' ')}
+              >
+                {deletingAccount ? (
+                  <Loader2 size={18} className="animate-spin text-red-400" aria-hidden="true" />
+                ) : (
+                  <Trash2 size={18} aria-hidden="true" />
+                )}
+                {deletingAccount ? 'Deleting account…' : 'Delete Account'}
+              </button>
+            </div>
           </div>
-        )}
-      </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* Collapsible sections                                                */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="px-4 py-4 space-y-3 max-w-2xl mx-auto">
+          {/* ============================================================== */}
+          {/* RIGHT COLUMN — Wishlist, Address, Notifications (stacked)      */}
+          {/* ============================================================== */}
+          <div className="space-y-4">
 
-        {/* Address Management (Req 16.6–16.8, 28.1–28.7) */}
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
-          <SectionToggle
-            label="Address Management"
-            open={activeSection === 'address'}
-            onToggle={() => toggleSection('address')}
-          />
-          {activeSection === 'address' && (
-            <div className="p-4 border-t border-gray-100">
-              <AddressManager onAddressChanged={refreshUser} />
+            {/* My Wishlist (Req 29.4–29.5) */}
+            <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-800">My Wishlist</h2>
+                {user.wishlistCount > 4 && (
+                  <Link
+                    href="/wishlist"
+                    className="text-brand text-sm font-medium"
+                  >
+                    View All ({user.wishlistCount})
+                  </Link>
+                )}
+              </div>
+              <div className="p-4">
+                <WishlistGrid />
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* My Wishlist (Req 29.4–29.5) */}
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
-          <SectionToggle
-            label="My Wishlist"
-            open={activeSection === 'wishlist'}
-            onToggle={() => toggleSection('wishlist')}
-          />
-          {activeSection === 'wishlist' && (
-            <div className="p-4 border-t border-gray-100">
-              <WishlistGrid />
+            {/* Address Management (Req 16.6–16.8, 28.1–28.7) */}
+            <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h2 className="text-sm font-semibold text-gray-800">Address Management</h2>
+              </div>
+              <div className="p-4">
+                <AddressManager onAddressChanged={refreshUser} />
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Notification Settings (Req 19.5) */}
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
-          <SectionToggle
-            label="Notification Settings"
-            open={activeSection === 'notifications'}
-            onToggle={() => toggleSection('notifications')}
-            icon={<Bell size={16} aria-hidden="true" />}
-          />
-          {activeSection === 'notifications' && (
-            <div className="border-t border-gray-100">
+            {/* Notification Settings (Req 19.5, 6.9, 6.10) */}
+            <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+              <div className="px-4 py-3 border-b border-gray-100">
+                <h2 className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                  <Bell size={16} aria-hidden="true" />
+                  Notification Settings
+                </h2>
+              </div>
+              {/* Notifications empty state (Req 6.9, 6.10) */}
+              <div className="px-4 py-4 border-b border-gray-100">
+                <p className="text-sm text-gray-500 text-center">
+                  You&apos;re all caught up! No new notifications.
+                </p>
+              </div>
               <NotificationToggle />
             </div>
-          )}
-        </div>
 
-        {/* ---------------------------------------------------------------- */}
-        {/* Danger zone                                                       */}
-        {/* ---------------------------------------------------------------- */}
-        <div className="rounded-xl overflow-hidden border border-gray-200 bg-white divide-y divide-gray-100">
-
-          {/* Sign Out (Req 16.10) */}
-          <button
-            type="button"
-            onClick={handleSignOut}
-            disabled={signingOut || deletingAccount}
-            className={[
-              'w-full flex items-center gap-3 px-4 py-4',
-              'text-sm font-medium text-gray-700',
-              'hover:bg-gray-50 transition-colors',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600',
-              'disabled:opacity-50',
-            ].join(' ')}
-          >
-            {signingOut ? (
-              <Loader2 size={18} className="animate-spin text-gray-400" aria-hidden="true" />
-            ) : (
-              <LogOut size={18} className="text-gray-400" aria-hidden="true" />
-            )}
-            {signingOut ? 'Signing out…' : 'Sign Out'}
-          </button>
-
-          {/* Account Deletion (Req 16.11) */}
-          <button
-            type="button"
-            onClick={handleDeleteAccount}
-            disabled={signingOut || deletingAccount}
-            className={[
-              'w-full flex items-center gap-3 px-4 py-4',
-              'text-sm font-medium text-red-600',
-              'hover:bg-red-50 transition-colors',
-              'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-500',
-              'disabled:opacity-50',
-            ].join(' ')}
-          >
-            {deletingAccount ? (
-              <Loader2 size={18} className="animate-spin text-red-400" aria-hidden="true" />
-            ) : (
-              <Trash2 size={18} aria-hidden="true" />
-            )}
-            {deletingAccount ? 'Deleting account…' : 'Delete Account'}
-          </button>
+          </div>
         </div>
 
         {/* App version note */}
-        <p className="text-center text-xs text-gray-400 pt-2">
-          DownXtown Buyer App
+        <p className="text-center text-xs text-gray-400 pt-4">
+          Downxtown Buyer App
         </p>
       </div>
     </main>

@@ -20,10 +20,9 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { authManager } from '@/lib/firebase/authManager'
-import { api } from '@/lib/api/apiClient'
+import { fetchCurrentPersonalProfile } from '@/lib/api/profile'
 import { useAuthStore } from '@/store/authStore'
 import { useOfflineQueueStore } from '@/store/offlineQueueStore'
-import type { Personal } from '@/types/user'
 
 interface AuthProviderProps {
   children: React.ReactNode
@@ -39,7 +38,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const unsubscribe = authManager.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          const profile = await api.get<Personal>('/buyer/profile')
+          const profile = await fetchCurrentPersonalProfile()
           useAuthStore.getState().setUser(profile, firebaseUser)
         } catch {
           // If the profile fetch fails (e.g. network error or 401), clear

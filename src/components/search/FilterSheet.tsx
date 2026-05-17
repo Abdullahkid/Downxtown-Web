@@ -68,16 +68,11 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 const RATING_OPTIONS = [1, 2, 3, 4, 5]
 
 const DEFAULT_CATEGORIES = [
-  'Electronics',
   'Fashion',
-  'Home & Kitchen',
-  'Beauty',
-  'Sports',
-  'Books',
-  'Toys',
-  'Grocery',
-  'Jewellery',
   'Footwear',
+  'Cosmetics',
+  'Electronics',
+  'Accessories',
 ]
 
 // ---------------------------------------------------------------------------

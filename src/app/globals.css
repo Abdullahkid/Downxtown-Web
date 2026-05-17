@@ -3,19 +3,80 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Light Theme (aligned with Sigma2 Color.kt) */
+  --background: #FAFDFD;
+  --bg-2: #FFFFFF;
+  --bg-3: #F6FAFB;
+  --bg-4: #EAF3F6;
+  --surface: #FFFFFF;
+  --surface-2: #DBE4E7;
+  --foreground: #191C1D;
+  
+  --text-1: #191C1D;
+  --text-2: #3F484B;
+  --text-3: #6F797C;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --border: #BFC8CB;
+  --border-accent: rgba(0,156,185,0.35);
+
+  /* Brand cyan palette */
+  --brand-color:            #009CB9; 
+  --brand-color-light:      #00C3E7; 
+  --brand-color-dark:       #006C89; 
+  --brand-accent:           #16DAFF; 
+  --brand-bg:               #ABF2FF; 
+
+  /* Semantic status colors */
+  --color-success: #4CAF50;
+  --color-warning: #FF9800;
+  --color-error:   #F44336;
+
+  --sidebar-w: 240px;
+  --topbar-h: 64px;
 }
 
 body {
   background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-1);
+  font-family: var(--font-dm-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 100px; }
+
+/* Shimmer animation for skeleton loaders */
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, var(--bg-3) 25%, var(--surface) 50%, var(--bg-3) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* Pattern Generators from prototype */
+.pattern-1 { background: repeating-linear-gradient(45deg, var(--bg-4), var(--bg-4) 2px, var(--surface) 2px, var(--surface) 20px); }
+.pattern-2 { background: radial-gradient(ellipse at 60% 40%, rgba(0,156,185,0.15), var(--bg-4) 70%); }
+.pattern-3 { background: repeating-linear-gradient(90deg, var(--bg-4), var(--bg-4) 1px, transparent 1px, transparent 24px), repeating-linear-gradient(0deg, var(--bg-4), var(--bg-4) 1px, var(--surface) 1px, var(--surface) 24px); }
+.pattern-4 { background: conic-gradient(from 0deg at 30% 60%, var(--bg-4), rgba(0,156,185,0.1), var(--bg-4), rgba(22,218,255,0.06), var(--bg-4)); }
+
+/* Product Color Backgrounds */
+.product-color-1 { background: linear-gradient(135deg, #1a1a2e, #2d1b4e); }
+.product-color-2 { background: linear-gradient(135deg, #1a2e1a, #1b4e2d); }
+.product-color-3 { background: linear-gradient(135deg, #2e1a1a, #4e1b1b); }
+.product-color-4 { background: linear-gradient(135deg, #2e2a1a, #4e3e1b); }
+.product-color-5 { background: linear-gradient(135deg, #1a2a2e, #1b3d4e); }
+.product-color-6 { background: linear-gradient(135deg, #241a2e, #3a1b4e); }
+
+/* Brand Colors */
+.brand-color-um { background: linear-gradient(135deg, #0a0a0a, #1a1a1a); }
+.brand-color-bb { background: linear-gradient(135deg, #1a0f00, #3d2000); }
+.brand-color-sk { background: linear-gradient(135deg, #000d1a, #001a2e); }
+.brand-color-no { background: linear-gradient(135deg, #0a001a, #1a002e); }
+.brand-color-ms { background: linear-gradient(135deg, #001a0a, #002e14); }

@@ -4,30 +4,32 @@
  * ChatRoomList — displays all ChatRooms sorted by last message timestamp.
  *
  * - Fetches from `GET /chat/rooms`; falls back to `cacheStore.getChatRooms()` on error.
- * - Sorts rooms by `lastMessage.timestamp` descending (most recent first).
- * - Shows seller name, profile image, last message preview, and unread badge.
+ * - Sorts rooms by `lastMessageTime` descending (most recent first).
+ * - Displays the first "other participant" returned by the backend (buyer excluded server-side).
  *
  * Requirements: 15.1, 18.1, 18.2
  */
 
 import React, { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { MessageCircle } from 'lucide-react'
 import { api } from '@/lib/api/apiClient'
 import { cacheStore } from '@/lib/cache/cacheStore'
 import { ImageLoader } from '@/components/shared/ImageLoader'
 import { ShimmerCard } from '@/components/shared/ShimmerCard'
 import { EmptyState } from '@/components/shared/EmptyState'
-import type { ChatRoom } from '@/types/chat'
+import { useAuthStore } from '@/store/authStore'
+import type { ChatListResponse, ChatRoomDto, ParticipantInfo } from '@/types/chat'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function sortRoomsByLastMessage(rooms: ChatRoom[]): ChatRoom[] {
+function sortRoomsByLastMessage(rooms: ChatRoomDto[]): ChatRoomDto[] {
   return [...rooms].sort((a, b) => {
-    const ta = a.lastMessage?.timestamp ?? 0
-    const tb = b.lastMessage?.timestamp ?? 0
+    const ta = a.lastMessageTime ?? 0
+    const tb = b.lastMessageTime ?? 0
     return tb - ta
   })
 }
@@ -48,24 +50,28 @@ function formatTimestamp(ts: number): string {
 
 function truncatePreview(text: string | undefined, maxLen = 40): string {
   if (!text) return ''
-  return text.length > maxLen ? text.slice(0, maxLen) + '…' : text
+  return text.length > maxLen ? text.slice(0, maxLen) + '...' : text
 }
 
-function getLastMessagePreview(room: ChatRoom): string {
-  const msg = room.lastMessage
-  if (!msg) return 'No messages yet'
-  switch (msg.type) {
+function getLastMessagePreview(room: ChatRoomDto): string {
+  const text = room.lastMessage ?? undefined
+  if (!text) return 'No messages yet'
+  switch (room.lastMessageType) {
     case 'TEXT':
-      return truncatePreview(msg.text)
+      return truncatePreview(text)
     case 'IMAGE':
-      return '📷 Image'
+      return 'Image'
     case 'SHARED_PRODUCT':
-      return '🛍️ Shared a product'
+      return 'Shared a product'
     case 'SHARED_STORE':
-      return '🏪 Shared a store'
+      return 'Shared a store'
     default:
-      return ''
+      return truncatePreview(text)
   }
+}
+
+function getPrimaryParticipant(room: ChatRoomDto): ParticipantInfo | null {
+  return room.participants?.[0] ?? null
 }
 
 // ---------------------------------------------------------------------------
@@ -90,12 +96,15 @@ function RoomSkeleton() {
 // ---------------------------------------------------------------------------
 
 interface RoomRowProps {
-  room: ChatRoom
+  room: ChatRoomDto
 }
 
 function RoomRow({ room }: RoomRowProps) {
   const preview = getLastMessagePreview(room)
-  const ts = room.lastMessage?.timestamp
+  const ts = room.lastMessageTime ?? undefined
+  const other = getPrimaryParticipant(room)
+  const name = other?.name?.trim() || other?.username?.trim() || 'Chat'
+  const avatarId = other?.profileImage ?? null
 
   return (
     <Link
@@ -106,15 +115,15 @@ function RoomRow({ room }: RoomRowProps) {
         'transition-colors focus-visible:outline-none focus-visible:ring-2',
         'focus-visible:ring-blue-500 focus-visible:ring-inset',
       ].join(' ')}
-      aria-label={`Chat with ${room.sellerName}${room.unreadCount > 0 ? `, ${room.unreadCount} unread` : ''}`}
+      aria-label={`Chat with ${name}${room.unreadCount > 0 ? `, ${room.unreadCount} unread` : ''}`}
     >
       {/* Seller avatar */}
       <div className="relative flex-shrink-0">
-        {room.sellerLogoId ? (
+        {avatarId ? (
           <ImageLoader
-            imageId={room.sellerLogoId}
+            imageId={avatarId}
             endpoint="display"
-            alt={`${room.sellerName} logo`}
+            alt={`${name} avatar`}
             width={48}
             height={48}
             className="rounded-full object-cover"
@@ -125,7 +134,7 @@ function RoomRow({ room }: RoomRowProps) {
             className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-lg font-semibold"
             aria-hidden="true"
           >
-            {room.sellerName.charAt(0).toUpperCase()}
+            {name.slice(0, 1).toUpperCase()}
           </div>
         )}
       </div>
@@ -137,14 +146,14 @@ function RoomRow({ room }: RoomRowProps) {
             className={[
               'text-sm font-semibold truncate',
               room.unreadCount > 0 ? 'text-gray-900' : 'text-gray-700',
-            ].join(' ')}
-          >
-            {room.sellerName}
+          ].join(' ')}
+        >
+          {name}
+        </span>
+        {ts != null && (
+          <span className="text-xs text-gray-400 flex-shrink-0">
+            {formatTimestamp(ts)}
           </span>
-          {ts != null && (
-            <span className="text-xs text-gray-400 flex-shrink-0">
-              {formatTimestamp(ts)}
-            </span>
           )}
         </div>
         <p
@@ -179,7 +188,10 @@ function RoomRow({ room }: RoomRowProps) {
 // ---------------------------------------------------------------------------
 
 export function ChatRoomList() {
-  const [rooms, setRooms] = useState<ChatRoom[]>([])
+  const router = useRouter()
+  const authStatus = useAuthStore((s) => s.status)
+
+  const [rooms, setRooms] = useState<ChatRoomDto[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -187,8 +199,12 @@ export function ChatRoomList() {
     setLoading(true)
     setError(null)
     try {
-      const data = await api.get<ChatRoom[]>('/chat/rooms')
-      const sorted = sortRoomsByLastMessage(data)
+      const data = await api.get<ChatListResponse | ChatRoomDto[]>('/chat/rooms?page=1&limit=50')
+
+      // Backend returns ChatListResponse; keep array fallback for safety.
+      const roomsArray: ChatRoomDto[] = Array.isArray(data) ? data : (data?.chatRooms ?? [])
+
+      const sorted = sortRoomsByLastMessage(roomsArray)
       setRooms(sorted)
       // Update cache for offline fallback (Req 18.1)
       await cacheStore.setChatRooms(sorted)
@@ -209,8 +225,17 @@ export function ChatRoomList() {
   }, [])
 
   useEffect(() => {
-    fetchRooms()
-  }, [fetchRooms])
+    if (authStatus === 'authenticated') {
+      fetchRooms()
+      return
+    }
+
+    if (authStatus === 'unauthenticated') {
+      setLoading(false)
+      setRooms([])
+      setError('Please sign in to view your messages.')
+    }
+  }, [fetchRooms, authStatus])
 
   if (loading) {
     return (
@@ -228,8 +253,8 @@ export function ChatRoomList() {
         icon={<MessageCircle size={48} strokeWidth={1.5} />}
         heading="Could not load chats"
         body={error}
-        ctaLabel="Retry"
-        onCta={fetchRooms}
+        ctaLabel={authStatus === 'unauthenticated' ? 'Sign in' : 'Retry'}
+        onCta={authStatus === 'unauthenticated' ? () => router.push('/auth/login') : fetchRooms}
       />
     )
   }

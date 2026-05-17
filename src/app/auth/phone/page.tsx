@@ -4,6 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Phone, ArrowLeft, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react'
 import { authManager } from '@/lib/firebase/authManager'
+import { fetchCurrentPersonalProfile } from '@/lib/api/profile'
+import { useAuthStore } from '@/store/authStore'
+import { setAuthCookie } from '@/lib/firebase/authCookie'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -27,6 +30,17 @@ export default function PhoneOtpPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') ?? '/'
+
+  const handlePostAuth = useCallback(async () => {
+    const profile = await fetchCurrentPersonalProfile()
+    const { getAuth } = await import('firebase/auth')
+    const { default: firebaseApp } = await import('@/lib/firebase/firebaseApp')
+    const auth = getAuth(firebaseApp)
+    const currentUser = auth.currentUser
+    if (!currentUser) throw new Error('No Firebase user after phone sign-in')
+    useAuthStore.getState().setUser(profile, currentUser)
+    setAuthCookie()
+  }, [])
 
   // Step state
   const [step, setStep] = useState<Step>('phone')
@@ -140,6 +154,7 @@ export default function PhoneOtpPage() {
     setOtpVerifying(true)
     try {
       await authManager.confirmOtp(otp)
+      await handlePostAuth()
       router.replace(redirectTo)
     } catch (err: unknown) {
       const newAttempts = attempts + 1

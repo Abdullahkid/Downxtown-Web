@@ -1,10 +1,10 @@
 'use client'
 
 /**
- * SideRail — vertical navigation rail for tablet (768–1279px) and desktop (≥ 1280px).
- * - Tablet (md → xl): icons only, labels are sr-only
- * - Desktop (xl+): icons + visible labels
- * Requirements: 1.1, 1.3, 1.5, 23.4, 23.5, 23.8, 24.3, 24.4
+ * SideRail — vertical navigation rail for desktop (≥ 1024px).
+ * - lg (1024–1279px): icons only, labels are sr-only
+ * - xl+ (≥ 1280px): icons + visible labels
+ * Requirements: 2.3, 2.4, 2.9, 2.10, 2.11
  */
 
 import Link from 'next/link'
@@ -35,12 +35,12 @@ export function SideRail() {
       role="navigation"
       aria-label="Main navigation"
       className={[
-        // Hidden on mobile, flex column on md+
-        'hidden md:flex',
+        // Hidden on mobile, flex column on lg+
+        'hidden lg:flex',
         'fixed left-0 top-0 z-40 h-full flex-col',
         // Tablet: narrow icon-only rail; Desktop: wider with labels
         'w-16 xl:w-56',
-        'border-r border-gray-200 bg-white',
+        'border-r border-border bg-bg-2',
         // Push content below the AppBar (56px mobile / 64px desktop)
         'pt-14 md:pt-16',
       ].join(' ')}
@@ -61,10 +61,10 @@ export function SideRail() {
                   : label}
                 className={[
                   'group relative flex items-center gap-3 rounded-xl px-3 py-2.5',
-                  'min-h-[44px] transition-colors',
+                  'min-h-[44px] border-l-2 border-transparent transition-colors',
                   isActive
-                    ? 'bg-[color-mix(in_srgb,var(--brand-color,#6366f1)_12%,transparent)] text-[var(--brand-color,#6366f1)]'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+                    ? 'bg-brand-accent/5 text-brand-accent border-l-brand-accent'
+                    : 'text-text-2 hover:bg-white/5 hover:text-text-1',
                 ].join(' ')}
               >
                 {/* Icon + badge */}
@@ -79,7 +79,7 @@ export function SideRail() {
                       aria-hidden="true"
                       className={[
                         'absolute -right-1.5 -top-1.5 flex items-center justify-center',
-                        'rounded-full bg-red-500 text-white',
+                        'rounded-full bg-brand-accent text-black',
                         unreadChatCount > 9
                           ? 'h-4 min-w-[1rem] px-0.5 text-[9px]'
                           : 'h-3.5 w-3.5 text-[9px]',

@@ -4,18 +4,21 @@
  * WishlistGrid — fetches the buyer's wishlist and renders a 2-column grid
  * of MiniProductCard components, each with a remove button.
  *
- * Requirements: 29.4, 29.5
+ * Requirements: 29.4, 29.5, 6.4, 6.5
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { Heart, Loader2, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { api, ApiError } from '@/lib/api/apiClient'
 import { MiniProductCard } from '@/components/feed/MiniProductCard'
 import { EmptyState } from '@/components/shared'
+import { Button } from '@/components/ui'
 import { useUiStore } from '@/store/uiStore'
 import type { MiniProduct } from '@/types/product'
 
 export function WishlistGrid() {
+  const router = useRouter()
   const [products, setProducts] = useState<MiniProduct[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -94,11 +97,21 @@ export function WishlistGrid() {
 
   if (products.length === 0) {
     return (
-      <EmptyState
-        icon={<Heart size={48} strokeWidth={1.5} />}
-        heading="Your wishlist is empty"
-        body="Save products you love and find them here."
-      />
+      <div className="flex flex-col items-center gap-4 py-10 text-center">
+        <Heart
+          size={48}
+          strokeWidth={1.5}
+          className="text-gray-300"
+          aria-hidden="true"
+        />
+        <p className="text-sm text-gray-500">No items in your wishlist yet</p>
+        <Button
+          variant="secondary"
+          onClick={() => router.push('/')}
+        >
+          Browse Products
+        </Button>
+      </div>
     )
   }
 

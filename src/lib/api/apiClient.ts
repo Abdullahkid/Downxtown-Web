@@ -1,5 +1,5 @@
 /**
- * API Client — thin fetch wrapper for the DownXtown backend.
+ * API Client — thin fetch wrapper for the Downxtown backend.
  *
  * Features:
  *  - 30-second request timeout via AbortController
@@ -87,7 +87,7 @@ export interface ApiRequestOptions {
 }
 
 /**
- * Execute an authenticated HTTP request against the DownXtown API.
+ * Execute an authenticated HTTP request against the Downxtown API.
  *
  * @param method  HTTP method (GET, POST, PUT, DELETE, …)
  * @param path    Path relative to the base URL, e.g. `/buyer/profile`
@@ -110,9 +110,15 @@ export async function apiRequest<T>(
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
       ...extraHeaders,
     };
+
+    // Only set Content-Type when sending a body. Setting it on GET/DELETE
+    // requests (which have no body) triggers an unnecessary CORS preflight
+    // that some server CORS configs reject, silently blocking the request.
+    if (body !== undefined) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (auth && token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -158,7 +164,6 @@ export async function apiRequest<T>(
     const { code, message } = await parseErrorBody(response);
     throw new ApiError(response.status, code, message);
   }
-
   // -------------------------------------------------------------------------
   // Parse and return the response body
   // -------------------------------------------------------------------------

@@ -14,6 +14,12 @@ export interface FeedStore {
   storeRating: number
   isFollowing: boolean
   recentProducts: MiniProduct[]
+  /** imageId for the store cover banner (not a full URL); absent on older API responses */
+  coverImage?: string
+  /** Total number of buyers following this store; absent on older API responses */
+  followerCount?: number
+  /** List of category label strings (e.g. "Streetwear", "Accessories"); absent on older API responses */
+  categoryTags?: string[]
 }
 
 /** Shape returned by GET /feed/stores (wrapped in ApiResponse.data) */

@@ -79,27 +79,27 @@ describe('buildStoreUrl', () => {
 // formatPrice
 // ---------------------------------------------------------------------------
 describe('formatPrice', () => {
-  it('formats 129900 paise as ₹1,299', () => {
-    // Intl output may vary slightly by environment; check for ₹ and 1,299
-    const result = formatPrice(129900)
+  it('formats 1299 rupees as ₹1,299', () => {
+    // Backend sends prices in rupees directly; 1299 → ₹1,299
+    const result = formatPrice(1299)
     expect(result).toContain('1,299')
     expect(result).toContain('₹')
   })
 
-  it('formats 0 paise as ₹0', () => {
+  it('formats 0 rupees as ₹0', () => {
     const result = formatPrice(0)
     expect(result).toContain('0')
     expect(result).toContain('₹')
   })
 
-  it('formats 100 paise as ₹1', () => {
-    const result = formatPrice(100)
+  it('formats 1 rupee as ₹1', () => {
+    const result = formatPrice(1)
     expect(result).toContain('1')
     expect(result).toContain('₹')
   })
 
-  it('formats 10000000 paise (₹1,00,000) correctly', () => {
-    const result = formatPrice(10000000)
+  it('formats 100000 rupees (₹1,00,000) correctly', () => {
+    const result = formatPrice(100000)
     expect(result).toContain('₹')
     // Indian numbering: 1,00,000
     expect(result).toMatch(/1,00,000|100,000/)

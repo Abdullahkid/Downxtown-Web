@@ -7,6 +7,41 @@ export type MessageType = 'TEXT' | 'IMAGE' | 'SHARED_PRODUCT' | 'SHARED_STORE'
 
 export type ParticipantType = 'PERSONAL' | 'BUSINESS'
 
+// ---------------------------------------------------------------------------
+// Backend DTOs (Ktor)
+// ---------------------------------------------------------------------------
+
+export interface ParticipantInfo {
+  id: string
+  name: string
+  username: string
+  profileImage?: string | null
+  type: ParticipantType
+}
+
+/** Chat room shape returned by `GET /chat/rooms` */
+export interface ChatRoomDto {
+  id: string
+  participants: ParticipantInfo[]
+  lastMessage?: string | null
+  lastMessageType: MessageType
+  lastMessageTime?: number | null
+  lastMessageSenderId?: string | null
+  unreadCount: number
+  isActive?: boolean
+}
+
+/** Response returned by `GET /chat/rooms` */
+export interface ChatListResponse {
+  chatRooms: ChatRoomDto[]
+  hasMore: boolean
+  page: number
+}
+
+// ---------------------------------------------------------------------------
+// Client/domain types (used for WebSocket message flow)
+// ---------------------------------------------------------------------------
+
 export interface ChatMessage {
   id: string
   roomId: string

@@ -1,20 +1,24 @@
 /**
- * App shell layout — wraps all auth-gated routes:
- *   /chat, /orders, /profile, /checkout, /search, /nearby, /
+ * AppLayout — shell for auth-required routes only:
+ *   /orders, /profile, /checkout, /chat, /nearby
  *
- * Marks every route in this group as noindex so search engines do not
- * index private, personalised, or auth-gated pages (Req 21.3).
+ * The feed (/) and search (/search) have moved to the (public) route group
+ * and are accessible without login.
  *
- * Navigation components (BottomNav, SideRail, AppBar) will be added in
- * Task 6.2 once those components are implemented.
+ * Renders the persistent navigation chrome (AppBar, SideRail, BottomNav),
+ * wraps page content in PageShell for correct insets, and mounts the
+ * ToastContainer so notifications are visible on every page.
+ *
+ * Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.7, 3.1, 10.11, 10.12
  */
 
 import type { Metadata } from 'next'
+import { AppBar, BottomNav, SideRail, PageShell } from '@/components/layout'
+import { ToastContainer } from '@/components/shared'
 
 /**
- * Instruct search engines not to index any page in the (app) route group.
- * These are either auth-gated (orders, chat, profile, checkout) or
- * personalised (feed, search, nearby) and have no SEO value.
+ * Auth-gated pages (orders, profile, checkout, chat) have no SEO value
+ * and should not be indexed.
  *
  * Requirements: 21.3
  */
@@ -30,5 +34,25 @@ export default function AppLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <div className="min-h-screen bg-background text-text-1">
+      {/* Top app bar — fixed, z-50, full width */}
+      <AppBar />
+
+      {/* Side rail — fixed left sidebar, hidden on mobile (lg:flex) */}
+      <SideRail />
+
+      {/* Main content area — offset left to clear SideRail on desktop */}
+      {/* lg:pl-16 = 64px (icon-only rail), xl:pl-56 = 224px (rail with labels) */}
+      <div className="lg:pl-16 xl:pl-56">
+        <PageShell>{children}</PageShell>
+      </div>
+
+      {/* Bottom nav — fixed, mobile only (lg:hidden) */}
+      <BottomNav />
+
+      {/* Toast notifications — fixed, rendered above all content */}
+      <ToastContainer />
+    </div>
+  )
 }

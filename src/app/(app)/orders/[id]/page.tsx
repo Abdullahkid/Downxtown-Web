@@ -8,13 +8,13 @@
  *  - Status timeline (OrderTimeline component)
  *  - Tracking info with clickable URL (opens in new tab)
  *  - Delivery address
- *  - Cancel Order button with window.confirm dialog (Req 14.5, 14.6)
+ *  - Cancel Order button with ConfirmationModal dialog (Req 14.5, 14.6)
  *  - Request Return button that opens ReturnForm inline (Req 14.7, 14.8)
  *
  * Requirements: 14.1–14.10
  */
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
@@ -32,6 +32,8 @@ import { ImageLoader } from '@/components/shared'
 import { ShimmerCard, ErrorState } from '@/components/shared'
 import { OrderTimeline } from '@/components/orders/OrderTimeline'
 import { ReturnForm } from '@/components/orders/ReturnForm'
+import { ConfirmationModal } from '@/components/ui'
+import { useUiStore } from '@/store/uiStore'
 import { getStatusColor } from '@/lib/utils/orderUtils'
 import { formatPrice, formatDate } from '@/lib/utils/urlBuilders'
 import type { OrderItem, PaymentMethod } from '@/types/order'
@@ -167,14 +169,17 @@ export default function OrderDetailPage({
   const queryClient = useQueryClient()
 
   const orderId = params.id
+  const uiStore = useUiStore()
 
   // Open return form automatically if ?action=return is in the URL
   const [showReturnForm, setShowReturnForm] = useState(
     searchParams.get('action') === 'return',
   )
-  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [showCancelModal, setShowCancelModal] = useState(false)
   const [cancelling, setCancelling] = useState(false)
   const [returnSuccess, setReturnSuccess] = useState(false)
+
+  const cancelButtonRef = useRef<HTMLButtonElement>(null)
 
   // -------------------------------------------------------------------------
   // Fetch order detail
@@ -192,11 +197,13 @@ export default function OrderDetailPage({
   // -------------------------------------------------------------------------
   // Cancel order (Req 14.5, 14.6)
   // -------------------------------------------------------------------------
-  const handleCancelOrder = useCallback(async () => {
-    if (!window.confirm('Are you sure you want to cancel this order?')) return
+  const handleCancelClick = useCallback(() => {
+    setShowCancelModal(true)
+  }, [])
 
+  const handleConfirmCancel = useCallback(async () => {
+    setShowCancelModal(false)
     setCancelling(true)
-    setCancelError(null)
 
     try {
       await api.post(`/buyer/orders/${orderId}/cancel`)
@@ -206,11 +213,11 @@ export default function OrderDetailPage({
     } catch (err) {
       const message =
         err instanceof Error ? err.message : 'Failed to cancel order. Please try again.'
-      setCancelError(message)
+      uiStore.addToast({ id: crypto.randomUUID(), message, type: 'error' })
     } finally {
       setCancelling(false)
     }
-  }, [orderId, queryClient])
+  }, [orderId, queryClient, uiStore])
 
   // -------------------------------------------------------------------------
   // Return success handler
@@ -453,26 +460,8 @@ export default function OrderDetailPage({
         </SectionCard>
 
         {/* ---------------------------------------------------------------- */}
-        {/* Cancel error                                                      */}
+        {/* Cancel error — now handled via toast; block removed             */}
         {/* ---------------------------------------------------------------- */}
-        {cancelError && (
-          <div
-            className="flex items-start gap-2 p-3 rounded-xl bg-red-50 border border-red-200"
-            role="alert"
-            aria-live="assertive"
-          >
-            <AlertCircle size={16} className="text-red-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <p className="text-sm text-red-700 flex-1">{cancelError}</p>
-            <button
-              type="button"
-              onClick={() => setCancelError(null)}
-              className="text-red-400 hover:text-red-600"
-              aria-label="Dismiss error"
-            >
-              <X size={14} aria-hidden="true" />
-            </button>
-          </div>
-        )}
 
         {/* ---------------------------------------------------------------- */}
         {/* Return success banner                                             */}
@@ -511,8 +500,9 @@ export default function OrderDetailPage({
             {/* Cancel Order (Req 14.5, 14.6) */}
             {showCancelButton && (
               <button
+                ref={cancelButtonRef}
                 type="button"
-                onClick={handleCancelOrder}
+                onClick={handleCancelClick}
                 disabled={cancelling}
                 className={[
                   'w-full py-3.5 rounded-xl text-sm font-semibold',
@@ -560,6 +550,22 @@ export default function OrderDetailPage({
           </div>
         )}
       </div>
+
+      {/* ------------------------------------------------------------------ */}
+      {/* Cancel Order confirmation modal (Req 5.1–5.4, 5.8)                 */}
+      {/* ------------------------------------------------------------------ */}
+      <ConfirmationModal
+        isOpen={showCancelModal}
+        onClose={() => setShowCancelModal(false)}
+        title="Cancel Order"
+        message="Are you sure you want to cancel this order? This action cannot be undone."
+        confirmLabel="Confirm Cancel"
+        cancelLabel="Keep Order"
+        confirmVariant="destructive"
+        onConfirm={handleConfirmCancel}
+        onCancel={() => setShowCancelModal(false)}
+        isLoading={cancelling}
+      />
     </main>
   )
 }

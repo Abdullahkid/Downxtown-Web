@@ -1,6 +1,6 @@
 {
-  "name": "DownXtown",
-  "short_name": "DownXtown",
+  "name": "Downxtown",
+  "short_name": "Downxtown",
   "description": "Discover local stores and products near you",
   "start_url": "/",
   "display": "standalone",

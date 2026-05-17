@@ -1,5 +1,5 @@
 /**
- * URL builders and formatters for the DownXtown Web Buyer App.
+ * URL builders and formatters for the Downxtown Web Buyer App.
  *
  * Requirements: 10.14, 9.13, 21.5
  */
@@ -72,14 +72,14 @@ export function buildStoreUrl(storeUsername: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Formats a price expressed in paise (1/100 of an Indian Rupee) to a
- * human-readable INR string using the Indian numbering system.
+ * Formats a price in Indian Rupees to a human-readable INR string
+ * using the Indian numbering system.
  *
  * @example
- * formatPrice(129900) // "₹1,299"
+ * formatPrice(1299)   // "₹1,299"
  * formatPrice(0)      // "₹0"
  *
- * @param paise - The price in paise (integer, non-negative).
+ * @param rupees - The price in rupees (integer, non-negative). Backend sends prices in rupees directly.
  * @returns A formatted string such as `"₹1,299"`.
  *
  * Requirements: 21.5

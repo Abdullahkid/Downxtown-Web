@@ -7,8 +7,13 @@
 import type { Metadata } from 'next'
 
 const SITE_URL = 'https://downxtown.com'
-const SITE_NAME = 'DownXtown'
+const SITE_NAME = 'Downxtown'
 const API_BASE = 'https://api.downxtown.com'
+
+// OG banner dimensions — used by Google and social crawlers for rich previews.
+// These match the recommended 1200×630 aspect ratio for link previews.
+const OG_IMAGE_WIDTH = 1200
+const OG_IMAGE_HEIGHT = 630
 
 // ---------------------------------------------------------------------------
 // Store metadata
@@ -29,12 +34,9 @@ export interface StoreMetadataInput {
 /**
  * Builds a Next.js `Metadata` object for a Store Profile page.
  *
- * Includes:
- *  - title / description
- *  - Open Graph tags (og:title, og:description, og:image, og:url, og:type)
- *  - Twitter card tags
- *  - Canonical URL
- *  - robots: index, follow
+ * Uses og:type = "profile" (the correct Open Graph type for profile pages,
+ * same as what Instagram uses) with profile:username for entity disambiguation.
+ * Includes explicit OG image dimensions so Google renders the rich preview.
  *
  * Requirements: 9.13, 21.1, 21.5, 21.6, 21.7
  */
@@ -54,12 +56,12 @@ export function buildStoreMetadata(input: StoreMetadataInput): Metadata {
   const metaDescription =
     description ??
     (city
-      ? `Shop at ${storeName} on DownXtown. Based in ${city}.${averageRating ? ` Rated ${averageRating.toFixed(1)} ★` : ''}`
-      : `Shop at ${storeName} on DownXtown.${averageRating ? ` Rated ${averageRating.toFixed(1)} ★` : ''}`)
+      ? `Shop at ${storeName} on Downxtown. Based in ${city}.${averageRating ? ` Rated ${averageRating.toFixed(1)} ★` : ''}`
+      : `Shop at ${storeName} on Downxtown.${averageRating ? ` Rated ${averageRating.toFixed(1)} ★` : ''}`)
 
-  // Prefer banner for OG image, fall back to logo
+  // Prefer banner for OG image (wider aspect ratio), fall back to logo
   const ogImageId = bannerImageId ?? logoImageId
-  const ogImage = ogImageId
+  const ogImageUrl = ogImageId
     ? `${API_BASE}/get-banner-image/${ogImageId}`
     : undefined
 
@@ -73,19 +75,35 @@ export function buildStoreMetadata(input: StoreMetadataInput): Metadata {
       index: true,
       follow: true,
     },
+    // og:type = "profile" tells Google/Facebook this is a profile page,
+    // which triggers the richer entity card appearance in search results.
     openGraph: {
-      type: 'website',
+      type: 'profile',
       url: pageUrl,
       siteName: SITE_NAME,
       title,
       description: metaDescription,
-      ...(ogImage ? { images: [{ url: ogImage, alt: `${storeName} banner` }] } : {}),
+      // profile:username is the Open Graph field that links the page to a
+      // named entity — equivalent to what Instagram sets on every profile.
+      username: storeUsername,
+      ...(ogImageUrl
+        ? {
+            images: [
+              {
+                url: ogImageUrl,
+                width: OG_IMAGE_WIDTH,
+                height: OG_IMAGE_HEIGHT,
+                alt: `${storeName} — Downxtown store`,
+              },
+            ],
+          }
+        : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description: metaDescription,
-      ...(ogImage ? { images: [ogImage] } : {}),
+      ...(ogImageUrl ? { images: [ogImageUrl] } : {}),
     },
   }
 }
@@ -120,7 +138,6 @@ export function buildProductMetadata(input: ProductMetadataInput): Metadata {
     sellingPrice,
     mrp,
     storeName,
-    storeUsername,
   } = input
 
   const pageUrl = `${SITE_URL}/product/${productId}`
@@ -130,14 +147,14 @@ export function buildProductMetadata(input: ProductMetadataInput): Metadata {
 
   const priceText =
     sellingPrice !== undefined
-      ? ` ₹${Math.round(sellingPrice / 100)}${mrp && mrp > sellingPrice ? ` (MRP ₹${Math.round(mrp / 100)})` : ''}.`
+      ? ` ₹${sellingPrice}${mrp && mrp > sellingPrice ? ` (MRP ₹${mrp})` : ''}.`
       : ''
 
   const metaDescription =
     description ??
-    `Buy ${productName}${storeName ? ` from ${storeName}` : ''} on DownXtown.${priceText}`
+    `Buy ${productName}${storeName ? ` from ${storeName}` : ''} on Downxtown.${priceText}`
 
-  const ogImage = mainImageId
+  const ogImageUrl = mainImageId
     ? `${API_BASE}/get-detail-image/${mainImageId}`
     : undefined
 
@@ -157,13 +174,24 @@ export function buildProductMetadata(input: ProductMetadataInput): Metadata {
       siteName: SITE_NAME,
       title,
       description: metaDescription,
-      ...(ogImage ? { images: [{ url: ogImage, alt: productName }] } : {}),
+      ...(ogImageUrl
+        ? {
+            images: [
+              {
+                url: ogImageUrl,
+                width: OG_IMAGE_WIDTH,
+                height: OG_IMAGE_HEIGHT,
+                alt: productName,
+              },
+            ],
+          }
+        : {}),
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description: metaDescription,
-      ...(ogImage ? { images: [ogImage] } : {}),
+      ...(ogImageUrl ? { images: [ogImageUrl] } : {}),
     },
   }
 }

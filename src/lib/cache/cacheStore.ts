@@ -12,7 +12,7 @@
 import { openDB, type IDBPDatabase } from 'idb'
 import type { Personal } from '@/types/user'
 import type { FeedStore } from '@/types/feed'
-import type { ChatRoom } from '@/types/chat'
+import type { ChatRoomDto } from '@/types/chat'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -50,7 +50,7 @@ interface SearchHistoryRecord {
 
 interface ChatRoomsRecord {
   id: 'rooms'
-  data: ChatRoom[]
+  data: ChatRoomDto[]
   lastAccessed: number
   size: number
 }
@@ -66,7 +66,7 @@ interface ApiResponseRecord {
 // DB schema type (used by idb for type-safe access)
 // ---------------------------------------------------------------------------
 
-interface DownXtownCacheDB {
+interface DownxtownCacheDB {
   'user-profile': {
     key: string
     value: ProfileRecord
@@ -104,8 +104,8 @@ export interface CacheStore {
   addSearchQuery(query: string): Promise<void>
   clearSearchHistory(): Promise<void>
 
-  getChatRooms(): Promise<ChatRoom[]>
-  setChatRooms(rooms: ChatRoom[]): Promise<void>
+  getChatRooms(): Promise<ChatRoomDto[]>
+  setChatRooms(rooms: ChatRoomDto[]): Promise<void>
 
   getApiResponse<T>(key: string): Promise<T | null>
   setApiResponse<T>(key: string, value: T): Promise<void>
@@ -131,10 +131,10 @@ function estimateSize(value: unknown): number {
 // ---------------------------------------------------------------------------
 
 class CacheStoreImpl implements CacheStore {
-  private dbPromise: Promise<IDBPDatabase<DownXtownCacheDB>>
+  private dbPromise: Promise<IDBPDatabase<DownxtownCacheDB>>
 
   constructor() {
-    this.dbPromise = openDB<DownXtownCacheDB>(DB_NAME, DB_VERSION, {
+    this.dbPromise = openDB<DownxtownCacheDB>(DB_NAME, DB_VERSION, {
       upgrade(db) {
         if (!db.objectStoreNames.contains('user-profile')) {
           db.createObjectStore('user-profile', { keyPath: 'id' })
@@ -155,7 +155,7 @@ class CacheStoreImpl implements CacheStore {
     })
   }
 
-  private async db(): Promise<IDBPDatabase<DownXtownCacheDB>> {
+  private async db(): Promise<IDBPDatabase<DownxtownCacheDB>> {
     return this.dbPromise
   }
 
@@ -252,7 +252,7 @@ class CacheStoreImpl implements CacheStore {
   // Chat Rooms
   // -------------------------------------------------------------------------
 
-  async getChatRooms(): Promise<ChatRoom[]> {
+  async getChatRooms(): Promise<ChatRoomDto[]> {
     const db = await this.db()
     const record = await db.get('chat-rooms', 'rooms')
     if (!record) return []
@@ -261,7 +261,7 @@ class CacheStoreImpl implements CacheStore {
     return record.data
   }
 
-  async setChatRooms(rooms: ChatRoom[]): Promise<void> {
+  async setChatRooms(rooms: ChatRoomDto[]): Promise<void> {
     const db = await this.db()
     const size = estimateSize(rooms)
     const record: ChatRoomsRecord = {
@@ -316,7 +316,7 @@ class CacheStoreImpl implements CacheStore {
 
     // Gather all entries with their store name, key, size, and lastAccessed
     type EvictableEntry = {
-      store: keyof DownXtownCacheDB
+      store: keyof DownxtownCacheDB
       key: string
       size: number
       lastAccessed: number
