@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * AppBar — sticky top bar.
@@ -80,9 +80,9 @@ export function AppBar({
             <Image
               src="/logo-light.png"
               alt="Downxtown logo"
-              width={44}
-              height={44}
-              className="object-contain flex-shrink-0"
+              width={100}
+              height={100}
+              className="object-contain flex-shrink-0 mt-1"
               priority
             />
             {/* Hide wordmark on mobile when search bar is shown — saves space */}
