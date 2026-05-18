@@ -14,8 +14,9 @@
  */
 
 import React, { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Star } from 'lucide-react'
+import { Star, ChevronRight } from 'lucide-react'
 import { ImageLoader } from '@/components/shared'
 import { MiniProductCard } from './MiniProductCard'
 import { api } from '@/lib/api/apiClient'
@@ -220,6 +221,23 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
           <p className="text-[12px] text-text-3 italic">No products yet</p>
         </div>
       )}
+
+      {/* See all products — navigates to store profile */}
+      <Link
+        href={`/store/${store.storeUsername}`}
+        className={[
+          'relative z-10 flex items-center justify-center gap-1 py-2.5',
+          'border-t border-border text-xs font-medium text-brand',
+          'hover:bg-brand-accent/5 transition-colors rounded-b-[16px]',
+          'focus-visible:outline focus-visible:outline-2',
+          'focus-visible:outline-offset-2 focus-visible:outline-brand',
+        ].join(' ')}
+        aria-label={`See all products from ${store.storeName}`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        See all products
+        <ChevronRight size={13} aria-hidden="true" />
+      </Link>
     </article>
   )
 }
