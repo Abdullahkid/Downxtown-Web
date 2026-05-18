@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * StoreProductGrid — staggered 2-column product grid with sort chips,
@@ -126,7 +126,7 @@ function ProductCard({ product }: { product: MiniProduct }) {
 
 function ProductGridShimmer() {
   return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 px-4 justify-items-stretch">
+    <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 px-4 justify-items-stretch">
       {Array.from({ length: 6 }, (_, i) => (
         <div key={i} className="flex flex-col gap-2">
           <ShimmerCard className="aspect-square w-full rounded-xl" />
@@ -293,7 +293,7 @@ export function StoreProductGrid({ storeId, storeUsername }: StoreProductGridPro
       ) : (
         <>
           {/* Staggered 2-column grid */}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 px-4 items-stretch justify-items-stretch">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 px-4 items-stretch justify-items-stretch">
             {allProducts.map((product, index) => (
               <div key={product.id} className="w-full">
                 <ProductCard product={product} />
@@ -306,7 +306,7 @@ export function StoreProductGrid({ storeId, storeUsername }: StoreProductGridPro
 
           {/* Loading more indicator */}
           {isFetchingNextPage && (
-            <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 px-4 justify-items-stretch">
+            <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-3 px-4 justify-items-stretch">
               {Array.from({ length: 2 }, (_, i) => (
                 <div key={i} className="flex flex-col gap-2">
                   <ShimmerCard className="aspect-square w-full rounded-xl" />
