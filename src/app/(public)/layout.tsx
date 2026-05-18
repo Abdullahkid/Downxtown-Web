@@ -13,6 +13,10 @@ import Link from 'next/link'
 import { AppBar, BottomNav, SideRail, PageShell } from '@/components/layout'
 import { ToastContainer } from '@/components/shared'
 
+// Public pages use Firebase auth state, IndexedDB (offline queue), and
+// real-time API data — none of which are available during static prerendering.
+export const dynamic = 'force-dynamic'
+
 /**
  * Slim site-wide footer â€” visible on all public pages.
  * Links to the marketing landing page and legal pages so users can always

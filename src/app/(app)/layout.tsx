@@ -16,6 +16,10 @@ import type { Metadata } from 'next'
 import { AppBar, BottomNav, SideRail, PageShell } from '@/components/layout'
 import { ToastContainer } from '@/components/shared'
 
+// All pages under (app) are auth-gated and use browser APIs (IndexedDB via idb,
+// WebSocket, Firebase). Never statically prerender them — always SSR on-demand.
+export const dynamic = 'force-dynamic'
+
 /**
  * Auth-gated pages (orders, profile, checkout, chat) have no SEO value
  * and should not be indexed.
