@@ -50,7 +50,7 @@ export function AppBar({
     <header
       className={[
         'fixed left-0 right-0 top-0 z-50',
-        'flex items-center gap-3',
+        'flex items-center justify-between gap-3',
         'h-14 md:h-16',
         'border-b border-border bg-bg-2 px-4',
       ].join(' ')}
@@ -80,8 +80,8 @@ export function AppBar({
             <Image
               src="/logo-light.png"
               alt="Downxtown logo"
-              width={100}
-              height={100}
+              width={95}
+              height={95}
               className="object-contain flex-shrink-0 mt-1"
               priority
             />
@@ -106,13 +106,13 @@ export function AppBar({
         )}
       </div>
 
-      {/* ── Centre: inline search bar ── */}
+      {/* ── Centre: inline search bar — capped width, not flex-1 ── */}
       {showSearchBar && (
         <form
           onSubmit={handleSearchSubmit}
           role="search"
           aria-label="Search stores and products"
-          className="flex-1 flex items-center"
+          className="flex items-center w-full max-w-[340px] md:max-w-[420px]"
         >
           <div className="relative w-full">
             <Search
