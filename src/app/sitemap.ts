@@ -12,7 +12,7 @@
 
 import type { MetadataRoute } from 'next'
 
-export const revalidate = 86400 // 24 hours
+export const revalidate = 3600 // 1 hour — was 24h, reduced to revalidate store/product pages sooner
 
 const SITE_URL = 'https://downxtown.com'
 const API_BASE = 'https://api.downxtown.com'
