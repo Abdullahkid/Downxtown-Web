@@ -118,7 +118,7 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
       <div className="absolute inset-0 rounded-[16px] bg-gradient-to-br from-brand/5 to-brand-accent/5 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity" />
 
       {/* Brand Cover Placeholder */}
-      <div className="h-[100px] bg-bg-4 relative overflow-hidden pattern-2">
+      <div className="h-[65px] bg-bg-4 relative overflow-hidden pattern-2">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-bg-3/80" />
       </div>
 
