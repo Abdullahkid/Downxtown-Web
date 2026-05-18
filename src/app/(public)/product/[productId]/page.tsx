@@ -64,7 +64,14 @@ async function fetchProduct(productId: string): Promise<Product | null> {
       estimatedDeliveryDays?: { min: number; max: number }
       shippingCost?: { amount: number }
       averageRating: number
-      storeInfo: { businessId: string; storeUsername: string; storeName: string }
+      storeInfo: {
+        businessId: string
+        storeUsername: string
+        storeName: string
+        managedBy?: string
+        websiteUrl?: string | null
+      }
+      shopifyHandle?: string | null
     }
 
     // Map to the Product type used by ProductPageClient
@@ -94,6 +101,10 @@ async function fetchProduct(productId: string): Promise<Product | null> {
       averageRating: dto.averageRating,
       // Store username for navigation — use storeUsername not businessId
       storeUsername: dto.storeInfo.storeUsername,
+      // Admin/Shopify store fields — used to route Buy Now to external cart
+      managedBy: (dto.storeInfo.managedBy as 'ADMIN' | 'SELLER' | undefined) ?? 'SELLER',
+      shopifyHandle: dto.shopifyHandle ?? null,
+      storeWebsiteUrl: dto.storeInfo.websiteUrl ?? null,
     }
 
     return product

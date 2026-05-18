@@ -331,10 +331,31 @@ export function ProductPageClient({
 
   const handleBuyNow = useCallback(() => {
     if (!selectedVariant || isOutOfStock) return
+
+    const isAdminManaged = product.managedBy === 'ADMIN'
+
+    if (isAdminManaged) {
+      // Admin/Shopify store — open external cart URL, bypass in-app checkout
+      // Mirrors Android: "$websiteUrl/cart/$variantId:1" → fallback to product page
+      const websiteUrl = product.storeWebsiteUrl
+      const cartUrl =
+        websiteUrl && selectedVariant.id
+          ? `${websiteUrl}/cart/${selectedVariant.id}:1`
+          : websiteUrl && product.shopifyHandle
+          ? `${websiteUrl}/products/${product.shopifyHandle}`
+          : null
+
+      if (cartUrl) {
+        window.open(cartUrl, '_blank', 'noopener,noreferrer')
+      }
+      return
+    }
+
+    // Regular seller — in-app checkout
     router.push(
       `/checkout?productId=${productId}&variantId=${selectedVariant.id}&quantity=${quantity}`,
     )
-  }, [router, productId, selectedVariant, quantity, isOutOfStock])
+  }, [router, productId, product, selectedVariant, quantity, isOutOfStock])
 
   const handleWishlist = useCallback(async () => {
     if (wishlistLoading || wishlistAdded) return

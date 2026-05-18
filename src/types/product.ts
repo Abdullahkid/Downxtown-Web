@@ -67,4 +67,13 @@ export interface Product {
   reelStatus?: string
   productReelVideoId?: string
   productReelThumbnailId?: string
+  /**
+   * 'ADMIN' = Shopify-managed store — Buy Now opens the external Shopify cart URL.
+   * 'SELLER' = regular in-app checkout flow.
+   */
+  managedBy?: 'ADMIN' | 'SELLER'
+  /** Shopify product handle — used to build cart/product URLs for admin stores */
+  shopifyHandle?: string | null
+  /** Store's external website URL — used to build Shopify cart URLs */
+  storeWebsiteUrl?: string | null
 }
