@@ -78,10 +78,10 @@ export function AppBar({
             aria-label="Downxtown home"
           >
             <Image
-              src="/logo-light.svg"
+              src="/logo-light.png"
               alt="Downxtown logo"
-              width={70}
-              height={70}
+              width={44}
+              height={44}
               className="object-contain flex-shrink-0"
               priority
             />
