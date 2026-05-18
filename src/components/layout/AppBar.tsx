@@ -112,7 +112,7 @@ export function AppBar({
           onSubmit={handleSearchSubmit}
           role="search"
           aria-label="Search stores and products"
-          className="flex items-center w-full max-w-[340px] md:max-w-[420px]"
+          className="flex items-center flex-1 max-w-[600px]"
         >
           <div className="relative w-full">
             <Search
