@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * Order Confirmation screen.
@@ -12,7 +12,7 @@
  * Requirements: 12.1, 12.2, 12.3, 12.4
  */
 
-import { useEffect, useRef } from 'react'
+import { Suspense, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle, ShoppingBag, ArrowRight } from 'lucide-react'
 import { formatPrice } from '@/lib/utils/urlBuilders'
@@ -53,7 +53,7 @@ function PaymentMethodBadge({ method }: { method: string }) {
 // ---------------------------------------------------------------------------
 // Main page component
 // ---------------------------------------------------------------------------
-export default function OrderConfirmationPage() {
+function OrderConfirmationPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const historyReplaced = useRef(false)
@@ -194,5 +194,13 @@ export default function OrderConfirmationPage() {
         </div>
       </main>
     </>
+  )
+}
+
+export default function OrderConfirmationPage() {
+  return (
+    <Suspense>
+      <OrderConfirmationPageContent />
+    </Suspense>
   )
 }

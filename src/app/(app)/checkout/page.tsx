@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * CheckoutPage — order placement screen.
@@ -18,7 +18,7 @@
  * Requirements: 11.1–11.14, 20.1–20.7, 22.6, 25.5
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Loader2, ShoppingBag, AlertCircle } from 'lucide-react'
 import { api, ApiError } from '@/lib/api/apiClient'
@@ -106,7 +106,7 @@ function loadRazorpayScript(): Promise<void> {
 // Page component
 // ---------------------------------------------------------------------------
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuthStore()
@@ -626,4 +626,12 @@ class DismissedError extends Error {
     super('dismissed')
     this.name = 'DismissedError'
   }
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense>
+      <CheckoutPageContent />
+    </Suspense>
+  )
 }

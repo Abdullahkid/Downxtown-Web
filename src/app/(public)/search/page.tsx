@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * SearchPage — Browse mode (category sidebar) and Search mode (results).
@@ -8,7 +8,7 @@
  * Requirements: 8.1–8.14, 25.4
  */
 
-import React, { useState, useCallback, useEffect, useRef } from 'react'
+import React, { Suspense,  useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -231,7 +231,7 @@ function BrowseMode({ onCategorySelect }: BrowseModeProps) {
  * URL params are the source of truth for query and filters so that the page
  * is deep-linkable and the browser back button works correctly (Req 1.6, 1.7).
  */
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -486,5 +486,13 @@ export default function SearchPage() {
         />
       </div>
     </main>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense>
+      <SearchPageContent />
+    </Suspense>
   )
 }

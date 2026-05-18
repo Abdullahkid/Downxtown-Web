@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * OrderDetailPage — full detail view for a single order item.
@@ -14,7 +14,7 @@
  * Requirements: 14.1–14.10
  */
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { Suspense,  useState, useCallback, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
@@ -159,7 +159,7 @@ function DetailSkeleton() {
 // OrderDetailPage
 // ---------------------------------------------------------------------------
 
-export default function OrderDetailPage({
+function OrderDetailPageContent({
   params,
 }: {
   params: Promise<{ id: string }>
@@ -567,5 +567,13 @@ export default function OrderDetailPage({
         isLoading={cancelling}
       />
     </main>
+  )
+}
+
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  return (
+    <Suspense>
+      <OrderDetailPageContent params={params} />
+    </Suspense>
   )
 }

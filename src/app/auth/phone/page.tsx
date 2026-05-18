@@ -1,6 +1,6 @@
-'use client'
+﻿'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Phone, ArrowLeft, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react'
 import { authManager } from '@/lib/firebase/authManager'
@@ -26,7 +26,7 @@ type Step = 'phone' | 'otp'
 // Page
 // ---------------------------------------------------------------------------
 
-export default function PhoneOtpPage() {
+function PhoneOtpPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const redirectTo = searchParams.get('redirect') ?? '/'
@@ -350,5 +350,13 @@ export default function PhoneOtpPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function PhoneOtpPage() {
+  return (
+    <Suspense>
+      <PhoneOtpPageContent />
+    </Suspense>
   )
 }
