@@ -77,35 +77,6 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
     [isFollowing, isFollowLoading, store.businessId],
   )
 
-  // -------------------------------------------------------------------------
-  // Star rating renderer
-  // -------------------------------------------------------------------------
-  const renderStars = (rating: number) => {
-    const fullStars = Math.floor(rating)
-    const hasHalf = rating - fullStars >= 0.5
-    return (
-      <div className="flex items-center gap-0.5" aria-label={`${rating.toFixed(1)} out of 5 stars`}>
-        {Array.from({ length: 5 }, (_, i) => {
-          const filled = i < fullStars
-          const half = !filled && hasHalf && i === fullStars
-          return (
-            <Star
-              key={i}
-              size={12}
-              aria-hidden="true"
-              className={
-                filled || half
-                  ? 'text-amber-400 fill-amber-400'
-                  : 'text-gray-300 fill-gray-300'
-              }
-            />
-          )
-        })}
-        <span className="ml-1 text-xs text-text-3">{rating.toFixed(1)}</span>
-      </div>
-    )
-  }
-
   return (
     <article
       className={[
@@ -160,11 +131,22 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
 
         {/* Store info */}
         <div className="flex-1 min-w-0 pt-2">
-          <p className="text-[16px] font-semibold text-text-1 truncate">
-            {store.storeName}
-          </p>
+          <div className="flex items-center gap-2 min-w-0">
+            <p className="text-[16px] font-semibold text-text-1 truncate">
+              {store.storeName}
+            </p>
+            {/* Single star + rating — only shown when rating > 0 */}
+            {store.storeRating > 0 && (
+              <span
+                className="flex items-center gap-0.5 flex-shrink-0 text-[11px] font-medium text-text-2"
+                aria-label={`${store.storeRating.toFixed(1)} out of 5`}
+              >
+                <Star size={11} className="fill-amber-400 text-amber-400" aria-hidden="true" />
+                {store.storeRating.toFixed(1)}
+              </span>
+            )}
+          </div>
           <p className="text-[12px] text-text-3 truncate mt-0.5">@{store.storeUsername}</p>
-          <div className="mt-1">{renderStars(store.storeRating)}</div>
         </div>
 
         {/* Follow / Unfollow button (Req 7.10, 7.11) */}
