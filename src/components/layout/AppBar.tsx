@@ -52,7 +52,7 @@ export function AppBar({
         'fixed left-0 right-0 top-0 z-50',
         'flex items-center justify-between gap-3',
         'h-14 md:h-16',
-        'border-b border-border bg-bg-2 px-4',
+        'border-b border-border bg-bg-2 px-3 md:px-4',
       ].join(' ')}
     >
       {/* ── Left side ── */}
@@ -80,8 +80,8 @@ export function AppBar({
             <Image
               src="/logo-light.png"
               alt="Downxtown logo"
-              width={95}
-              height={95}
+              width={85}
+              height={85}
               className="object-contain flex-shrink-0 mt-1"
               priority
             />

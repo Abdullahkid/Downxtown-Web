@@ -231,7 +231,7 @@ export default function FeedPage() {
         </div>
       )}
 
-      <div className="max-w-[1320px] mx-auto px-4 md:px-6 xl:px-8 pb-24 space-y-5">
+      <div className="max-w-[1320px] mx-auto px-2 md:px-4 xl:px-6 pb-24 space-y-5">
 
         {/* ---------------------------------------------------------------- */}
         {/* Master category icon row (Req 7.1)                               */}

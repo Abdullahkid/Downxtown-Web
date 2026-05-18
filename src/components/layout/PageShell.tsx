@@ -40,7 +40,7 @@ export function PageShell({ children, className = '' }: PageShellProps) {
           // Max width + centering
           'mx-auto w-full max-w-[1440px]',
           // Responsive horizontal padding
-          'px-4 md:px-6 lg:px-8',
+          'px-2 md:px-4 lg:px-6 xl:px-8',
           // Top offset for sticky AppBar (56px mobile / 64px desktop)
           'pt-14 md:pt-16',
           // Bottom offset so content isn't hidden behind BottomNav on mobile

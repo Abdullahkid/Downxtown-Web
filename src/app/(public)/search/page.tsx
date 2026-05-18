@@ -458,7 +458,7 @@ function SearchPageContent() {
         <div className="flex-1 min-w-0">
           {isSearchMode ? (
             /* Search mode — show results */
-            <div className="px-4 py-4">
+            <div className="px-2 py-3">
               <SearchResults
                 query={urlQuery}
                 minPrice={urlFilters.minPrice || undefined}
