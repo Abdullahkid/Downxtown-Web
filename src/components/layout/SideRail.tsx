@@ -1,4 +1,4 @@
-'use client'
+﻿﻿'use client'
 
 /**
  * SideRail — vertical navigation rail for desktop (≥ 1024px).
@@ -9,7 +9,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Search, MessageCircle, ShoppingBag, User } from 'lucide-react'
+import { Home, MessageCircle, ShoppingBag, User } from 'lucide-react'
 import { useUiStore } from '@/store/uiStore'
 
 interface NavTab {
@@ -20,7 +20,6 @@ interface NavTab {
 
 const TABS: NavTab[] = [
   { href: '/',        label: 'Home',    icon: Home },
-  { href: '/search',  label: 'Search',  icon: Search },
   { href: '/chat',    label: 'Chat',    icon: MessageCircle },
   { href: '/orders',  label: 'Orders',  icon: ShoppingBag },
   { href: '/profile', label: 'Profile', icon: User },

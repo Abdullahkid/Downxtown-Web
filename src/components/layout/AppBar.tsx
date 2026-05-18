@@ -4,22 +4,22 @@
  * AppBar — sticky top bar.
  * - Height: 56px on mobile, 64px on desktop (md+)
  * - Left: logo ("Downxtown") links to /welcome, or back button when showBack=true
- * - Right: optional search icon and notification bell
+ * - Center: inline search bar shown on the feed page (pathname === "/")
+ * - Right: optional notification bell
  * Requirements: 1.1, 1.3, 23.4, 23.8, 24.1, 24.2
  */
 
+import React, { useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { ChevronLeft, Search, Bell } from 'lucide-react'
+import { useRouter, usePathname } from 'next/navigation'
+import { ChevronLeft, Search, Bell, X } from 'lucide-react'
 
 export interface AppBarProps {
   /** Page title shown in the center when a back button is present */
   title?: string
   /** Show a back button instead of the logo */
   showBack?: boolean
-  /** Show the search icon on the right */
-  showSearch?: boolean
   /** Show the notification bell on the right */
   showNotification?: boolean
 }
@@ -27,22 +27,36 @@ export interface AppBarProps {
 export function AppBar({
   title,
   showBack = false,
-  showSearch = false,
   showNotification = false,
 }: AppBarProps) {
   const router = useRouter()
+  const pathname = usePathname()
+  const [query, setQuery] = useState('')
+
+  // Show the inline search bar only on the feed page
+  const showSearchBar = pathname === '/'
+
+  const handleSearchSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      const trimmed = query.trim()
+      if (!trimmed) return
+      router.push(`/search?q=${encodeURIComponent(trimmed)}`)
+    },
+    [query, router],
+  )
 
   return (
     <header
       className={[
         'fixed left-0 right-0 top-0 z-50',
-        'flex items-center justify-between',
-        'h-14 md:h-16',          // 56px / 64px
+        'flex items-center gap-3',
+        'h-14 md:h-16',
         'border-b border-border bg-bg-2 px-4',
       ].join(' ')}
     >
       {/* ── Left side ── */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-shrink-0">
         {showBack ? (
           <button
             type="button"
@@ -71,13 +85,20 @@ export function AppBar({
               className="object-contain flex-shrink-0"
               priority
             />
-            <span className="font-archivo font-bold text-[22px] tracking-tight text-text-1 transition-colors group-hover:text-brand">
+            {/* Hide wordmark on mobile when search bar is shown — saves space */}
+            <span
+              className={[
+                'font-archivo font-bold text-[22px] tracking-tight text-text-1',
+                'transition-colors group-hover:text-brand',
+                showSearchBar ? 'hidden md:block' : '',
+              ].join(' ')}
+            >
               Downxtown
             </span>
           </Link>
         )}
 
-        {/* Optional page title (shown next to back button) */}
+        {/* Optional page title next to back button */}
         {showBack && title && (
           <h1 className="text-base font-semibold text-text-1 line-clamp-1">
             {title}
@@ -85,39 +106,63 @@ export function AppBar({
         )}
       </div>
 
-      {/* ── Right side ── */}
-      {(showSearch || showNotification) && (
-        <div className="flex items-center gap-1">
-          {showSearch && (
-            <button
-              type="button"
-              aria-label="Open search"
-              onClick={() => router.push('/search')}
+      {/* ── Centre: inline search bar ── */}
+      {showSearchBar && (
+        <form
+          onSubmit={handleSearchSubmit}
+          role="search"
+          aria-label="Search stores and products"
+          className="flex-1 flex items-center"
+        >
+          <div className="relative w-full">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-3 pointer-events-none"
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search stores & products…"
+              aria-label="Search stores and products"
               className={[
-                'flex items-center justify-center rounded-[10px]',
-                'h-10 w-10 text-text-2 border border-border bg-bg-3',
-                'hover:bg-surface hover:text-text-1 active:bg-surface-2',
+                'w-full h-9 pl-9 pr-8 rounded-full',
+                'bg-bg-3 border border-border',
+                'text-sm text-text-1 placeholder-text-3',
+                'focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-brand/40',
                 'transition-colors',
               ].join(' ')}
-            >
-              <Search size={20} aria-hidden="true" />
-            </button>
-          )}
+            />
+            {query && (
+              <button
+                type="button"
+                aria-label="Clear search"
+                onClick={() => setQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-3 hover:text-text-1"
+              >
+                <X size={14} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </form>
+      )}
 
-          {showNotification && (
-            <button
-              type="button"
-              aria-label="Notifications"
-              className={[
-                'flex items-center justify-center rounded-[10px]',
-                'h-10 w-10 text-text-2 border border-border bg-bg-3',
-                'hover:bg-surface hover:text-text-1 active:bg-surface-2',
-                'transition-colors',
-              ].join(' ')}
-            >
-              <Bell size={20} aria-hidden="true" />
-            </button>
-          )}
+      {/* ── Right side ── */}
+      {showNotification && (
+        <div className="flex items-center flex-shrink-0">
+          <button
+            type="button"
+            aria-label="Notifications"
+            className={[
+              'flex items-center justify-center rounded-[10px]',
+              'h-10 w-10 text-text-2 border border-border bg-bg-3',
+              'hover:bg-surface hover:text-text-1 active:bg-surface-2',
+              'transition-colors',
+            ].join(' ')}
+          >
+            <Bell size={20} aria-hidden="true" />
+          </button>
         </div>
       )}
     </header>
