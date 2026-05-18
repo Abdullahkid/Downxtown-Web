@@ -66,6 +66,14 @@ async function fetchStoreProfile(
         phoneNumber?: string
         whatsappNumber?: string
         isFollowing?: boolean
+        websiteUrl?: string
+        socialLinks?: {
+          instagram?: string
+          facebook?: string
+          twitter?: string
+          youtube?: string
+        }
+        city?: string
       }
     }
 
@@ -87,6 +95,10 @@ async function fetchStoreProfile(
       productCount: s.productsCount,
       phoneNumber: s.phoneNumber,
       whatsappNumber: s.whatsappNumber,
+      websiteUrl: s.websiteUrl,
+      instagramUrl: s.socialLinks?.instagram,
+      facebookUrl: s.socialLinks?.facebook,
+      city: s.city,
     }
     return profile
   } catch {
@@ -148,7 +160,14 @@ function buildJsonLd(store: StoreProfile): string {
 
   // Build sameAs array — links this entity to other known identifiers.
   // Google uses sameAs to connect the entity across the web.
+  // Including Instagram is critical: when Google sees the same brand name
+  // on both Instagram and Downxtown linked via sameAs, it treats them as
+  // the same entity — which is how Downxtown store pages surface alongside
+  // the brand's Instagram in search results.
   const sameAs: string[] = []
+  if (store.instagramUrl) sameAs.push(store.instagramUrl)
+  if (store.facebookUrl) sameAs.push(store.facebookUrl)
+  if (store.websiteUrl) sameAs.push(store.websiteUrl)
   if (store.whatsappNumber) {
     sameAs.push(`https://wa.me/${store.whatsappNumber.replace(/\D/g, '')}`)
   }

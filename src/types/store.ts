@@ -21,6 +21,12 @@ export interface StoreProfile {
   city?: string
   phoneNumber?: string
   whatsappNumber?: string
+  /** Store's own website URL — used in sameAs for SEO entity linking */
+  websiteUrl?: string
+  /** Instagram profile URL — the most important sameAs link for brand discovery */
+  instagramUrl?: string
+  /** Facebook page URL */
+  facebookUrl?: string
   averageRating: number
   totalReviews: number
   isFollowing: boolean
