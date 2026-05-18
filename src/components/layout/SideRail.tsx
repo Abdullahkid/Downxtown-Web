@@ -9,7 +9,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MessageCircle, ShoppingBag, User } from 'lucide-react'
+import { Home, MessageCircle, ShoppingBag } from 'lucide-react'
 import { useUiStore } from '@/store/uiStore'
 
 interface NavTab {
@@ -22,7 +22,6 @@ const TABS: NavTab[] = [
   { href: '/',        label: 'Home',    icon: Home },
   { href: '/chat',    label: 'Chat',    icon: MessageCircle },
   { href: '/orders',  label: 'Orders',  icon: ShoppingBag },
-  { href: '/profile', label: 'Profile', icon: User },
 ]
 
 export function SideRail() {

@@ -13,7 +13,7 @@ import React, { useState, useCallback } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter, usePathname } from 'next/navigation'
-import { ChevronLeft, Search, Bell, X } from 'lucide-react'
+import { ChevronLeft, Search, Bell, X, User } from 'lucide-react'
 
 export interface AppBarProps {
   /** Page title shown in the center when a back button is present */
@@ -148,9 +148,9 @@ export function AppBar({
         </form>
       )}
 
-      {/* ── Right side ── */}
-      {showNotification && (
-        <div className="flex items-center flex-shrink-0">
+      {/* ── Right side: profile + optional bell ── */}
+      <div className="flex items-center gap-1 flex-shrink-0">
+        {showNotification && (
           <button
             type="button"
             aria-label="Notifications"
@@ -163,8 +163,24 @@ export function AppBar({
           >
             <Bell size={20} aria-hidden="true" />
           </button>
-        </div>
-      )}
+        )}
+
+        {/* Profile — always visible, right of search bar */}
+        <Link
+          href="/profile"
+          aria-label="Your profile"
+          className={[
+            'flex items-center justify-center rounded-[10px]',
+            'h-10 w-10 border border-border bg-bg-3',
+            pathname === '/profile'
+              ? 'text-brand-accent border-brand-accent/30 bg-brand-accent/5'
+              : 'text-text-2 hover:bg-surface hover:text-text-1',
+            'transition-colors',
+          ].join(' ')}
+        >
+          <User size={20} aria-hidden="true" strokeWidth={pathname === '/profile' ? 2.5 : 1.75} />
+        </Link>
+      </div>
     </header>
   )
 }
