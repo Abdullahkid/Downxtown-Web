@@ -23,7 +23,6 @@
     "@radix-ui/react-toast": "^1.2.14",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@react-three/fiber": "8.16.8",
-    "@rollup/rollup-win32-x64-msvc": "^4.60.4",
     "@tanstack/react-query": "^5.80.7",
     "@tsparticles/react": "3.0.0",
     "@tsparticles/slim": "3.9.1",
