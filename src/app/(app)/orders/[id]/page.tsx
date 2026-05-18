@@ -162,13 +162,13 @@ function DetailSkeleton() {
 export default function OrderDetailPage({
   params,
 }: {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
 
-  const orderId = params.id
+  const { id: orderId } = React.use(params)
   const uiStore = useUiStore()
 
   // Open return form automatically if ?action=return is in the URL
