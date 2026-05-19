@@ -5,10 +5,12 @@
  *   - Skip-navigation link (WCAG 2.4.1)
  *   - <main id="main-content"> with max-width 1440px and responsive padding
  *   - Bottom padding so content isn't hidden behind the BottomNav on mobile
+ *   - AppInstallBanner on mobile (below the AppBar)
  * Requirements: 1.1, 1.5, 23.4, 23.8, 24.1, 24.2, 24.3, 24.4
  */
 
 import { type ReactNode } from 'react'
+import { AppInstallBanner } from '@/components/shared/AppInstallBanner'
 
 export interface PageShellProps {
   children: ReactNode
@@ -33,6 +35,9 @@ export function PageShell({ children, className = '' }: PageShellProps) {
         Skip to main content
       </a>
 
+      {/* Mobile-only app install banner — fixed below the AppBar */}
+      <AppInstallBanner />
+
       <main
         id="main-content"
         tabIndex={-1}
@@ -41,8 +46,9 @@ export function PageShell({ children, className = '' }: PageShellProps) {
           'mx-auto w-full max-w-[1440px]',
           // Responsive horizontal padding
           'px-2 md:px-4 lg:px-6 xl:px-8',
-          // Top offset for sticky AppBar (56px mobile / 64px desktop)
-          'pt-14 md:pt-16',
+          // Top offset: AppBar (56px) + install banner (~56px) on mobile;
+          // desktop has no banner so just AppBar (64px)
+          'pt-28 md:pt-32 lg:pt-16',
           // Bottom offset so content isn't hidden behind BottomNav on mobile
           'pb-20 lg:pb-6',
           className,

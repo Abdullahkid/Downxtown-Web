@@ -74,27 +74,17 @@ export function AppBar({
         ) : (
           <Link
             href="/welcome"
-            className="flex items-center gap-2 group"
+            className="flex items-center self-center group"
             aria-label="Downxtown home"
           >
             <Image
-              src="/logo-light.png"
-              alt="Downxtown logo"
-              width={85}
-              height={85}
-              className="object-contain flex-shrink-0 mt-1"
+              src="/logo-black.png"
+              alt="Downxtown"
+              width={290}
+              height={80}
+              className="object-contain flex-shrink-0 block"
               priority
             />
-            {/* Hide wordmark on mobile when search bar is shown — saves space */}
-            <span
-              className={[
-                'font-archivo font-bold text-[22px] tracking-tight text-text-1',
-                'transition-colors group-hover:text-brand',
-                showSearchBar ? 'hidden md:block' : '',
-              ].join(' ')}
-            >
-              Downxtown
-            </span>
           </Link>
         )}
 

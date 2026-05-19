@@ -95,7 +95,7 @@ export function ShoppersSection() {
                         onClick={handleCTA}
                         className="bg-ink hover:bg-blue text-white px-12 py-5 font-bebas text-lg tracking-[2px] transition-all duration-300 shadow-xl hover:shadow-blue/20"
                     >
-                        LIST YOUR BRAND FREE →
+                        DOWNLOAD THE APP →
                     </button>
                 </motion.div>
             </div>

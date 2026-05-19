@@ -9,7 +9,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, MessageCircle, ShoppingBag } from 'lucide-react'
+import { Home, MessageCircle, ShoppingBag, Info } from 'lucide-react'
 import { useUiStore } from '@/store/uiStore'
 
 interface NavTab {
@@ -102,6 +102,31 @@ export function SideRail() {
           )
         })}
       </ul>
+
+      {/* ── Bottom: About Downxtown ── */}
+      <div className="mt-auto px-2 py-3 border-t border-border">
+        <Link
+          href="/welcome"
+          aria-label="About Downxtown"
+          className={[
+            'group flex items-center gap-3 rounded-xl px-3 py-2.5',
+            'min-h-[44px] border-l-2 border-transparent transition-colors',
+            pathname === '/welcome'
+              ? 'bg-brand-accent/5 text-brand-accent border-l-brand-accent'
+              : 'text-text-2 hover:bg-white/5 hover:text-text-1',
+          ].join(' ')}
+        >
+          <Info
+            size={22}
+            strokeWidth={pathname === '/welcome' ? 2.5 : 1.75}
+            aria-hidden="true"
+            className="shrink-0"
+          />
+          <span className="text-sm font-medium sr-only xl:not-sr-only xl:block">
+            About Downxtown
+          </span>
+        </Link>
+      </div>
     </nav>
   )
 }
