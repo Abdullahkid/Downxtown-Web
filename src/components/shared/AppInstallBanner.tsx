@@ -16,7 +16,7 @@ import { X } from 'lucide-react'
 
 const STORAGE_KEY = 'dxt_app_banner_dismissed'
 const PLAY_STORE_URL =
-  'https://play.google.com/store/apps/details?id=com.downxtown.sigma2one'
+  'https://play.google.com/store/apps/details?id=com.downxtown.sigma2'
 
 export function AppInstallBanner() {
   const [visible, setVisible] = useState(false)
