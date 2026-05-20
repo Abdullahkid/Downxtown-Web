@@ -26,6 +26,8 @@ import {
   Loader2,
   Check,
   X,
+  MessageSquare,
+  ChevronRight,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
@@ -504,6 +506,28 @@ export default function ProfilePage() {
               <div className="p-4">
                 <WishlistGrid />
               </div>
+            </div>
+
+            {/* My Reviews */}
+            <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+              <Link
+                href="/profile/reviews"
+                className="flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                aria-label="View my reviews"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-bg">
+                    <MessageSquare size={18} className="text-brand" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">My Reviews</p>
+                    <p className="text-xs text-gray-400">
+                      Reviews you&apos;ve left for stores
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-gray-400 shrink-0" aria-hidden="true" />
+              </Link>
             </div>
 
             {/* Address Management (Req 16.6–16.8, 28.1–28.7) */}

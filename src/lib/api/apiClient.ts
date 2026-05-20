@@ -15,7 +15,7 @@ import { authManager } from '@/lib/firebase/authManager';
 // Constants
 // ---------------------------------------------------------------------------
 
-const BASE_URL = 'https://api.downxtown.com';
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'https://api.downxtown.com';
 const TIMEOUT_MS = 30_000;
 
 // ---------------------------------------------------------------------------

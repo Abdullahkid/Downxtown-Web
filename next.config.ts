@@ -6,6 +6,27 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+
+  /**
+   * Rewrite /api-proxy/* → https://api.downxtown.com/* during local dev.
+   *
+   * This proxy runs on the Next.js Node.js server, so the request to the
+   * backend is server-to-server (no CORS restriction). The browser only
+   * ever talks to localhost:3000, which is same-origin.
+   *
+   * In production the rewrite is still registered but unused — apiClient
+   * points directly to https://api.downxtown.com when NEXT_PUBLIC_API_BASE_URL
+   * is set (which it is in the production deployment environment).
+   */
+  async rewrites() {
+    return [
+      {
+        source: '/api-proxy/:path*',
+        destination: 'https://api.downxtown.com/:path*',
+      },
+    ]
+  },
+
   images: {
     remotePatterns: [
       {
