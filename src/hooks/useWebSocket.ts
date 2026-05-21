@@ -1,19 +1,23 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-
-const WS_BASE_URL = 'wss://api.downxtown.com'
-const MAX_RECONNECT_ATTEMPTS = 10
+import { useEffect } from 'react'
+import { useWsContext } from '@/lib/chat/wsContext'
+import { wsManager } from '@/lib/chat/wsManager'
+import type { WsStatus } from '@/types/chat'
 
 /**
  * Returns the exponential backoff delay in milliseconds for a given attempt number.
  * delay = min(1000 * 2^n, 30_000)
+ *
+ * Kept as the canonical export — wsManager imports this directly (no duplication).
+ * Requirements: 1.4
  */
 export function getBackoffDelay(n: number): number {
   return Math.min(1000 * Math.pow(2, n), 30_000)
 }
 
-export type WebSocketStatus = 'connected' | 'connecting' | 'reconnecting' | 'disconnected'
+// Re-export WsStatus under the legacy alias so existing consumers are unaffected.
+export type WebSocketStatus = WsStatus
 
 export interface UseWebSocketOptions {
   onMessage?: (data: unknown) => void
@@ -27,114 +31,48 @@ export interface UseWebSocketReturn {
   disconnect: () => void
 }
 
+/**
+ * Thin wrapper over WsContext that preserves the original per-room hook interface.
+ *
+ * - On mount  → ctx.joinRoom(roomId)  (Req 1.5)
+ * - On unmount → ctx.leaveRoom(roomId) (Req 1.6)
+ * - Forwards `new_message` and `message_ack` events to options?.onMessage
+ *
+ * The hook no longer manages its own WebSocket; the single persistent connection
+ * is owned by WS_Manager and exposed via WsProvider/WsContext.
+ *
+ * Requirements: 1.5, 1.6
+ */
 export function useWebSocket(
   roomId: string,
-  options?: UseWebSocketOptions
+  options?: UseWebSocketOptions,
 ): UseWebSocketReturn {
-  const [status, setStatus] = useState<WebSocketStatus>('connecting')
+  const ctx = useWsContext()
 
-  const wsRef = useRef<WebSocket | null>(null)
-  const attemptRef = useRef<number>(0)
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  // When true, reconnection is suppressed (user called disconnect or component unmounted)
-  const intentionalCloseRef = useRef<boolean>(false)
-
-  // Keep options in a ref so the connect closure always sees the latest callbacks
-  // without needing to be re-created on every render.
-  const optionsRef = useRef<UseWebSocketOptions | undefined>(options)
+  // Join the room on mount; leave on unmount or when roomId changes (Req 1.5, 1.6).
   useEffect(() => {
-    optionsRef.current = options
-  })
+    ctx.joinRoom(roomId)
+    return () => ctx.leaveRoom(roomId)
+  }, [roomId, ctx])
 
-  const clearTimer = useCallback(() => {
-    if (timerRef.current !== null) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-  }, [])
-
-  const connect = useCallback(() => {
-    // Guard: never open a new socket if we intentionally disconnected
-    if (intentionalCloseRef.current) return
-
-    const url = `${WS_BASE_URL}/chat/${roomId}`
-    const ws = new WebSocket(url)
-    wsRef.current = ws
-
-    ws.onopen = () => {
-      attemptRef.current = 0
-      setStatus('connected')
-      optionsRef.current?.onOpen?.()
-    }
-
-    ws.onmessage = (event: MessageEvent) => {
-      try {
-        const data: unknown = JSON.parse(event.data as string)
-        optionsRef.current?.onMessage?.(data)
-      } catch {
-        // If the payload is not JSON, pass the raw string
-        optionsRef.current?.onMessage?.(event.data)
-      }
-    }
-
-    ws.onclose = () => {
-      optionsRef.current?.onClose?.()
-
-      if (intentionalCloseRef.current) {
-        setStatus('disconnected')
-        return
-      }
-
-      const attempt = attemptRef.current
-      if (attempt < MAX_RECONNECT_ATTEMPTS) {
-        setStatus('reconnecting')
-        const delay = getBackoffDelay(attempt)
-        attemptRef.current = attempt + 1
-        timerRef.current = setTimeout(() => {
-          connect()
-        }, delay)
-      } else {
-        setStatus('disconnected')
-      }
-    }
-
-    ws.onerror = () => {
-      // onerror is always followed by onclose, so we let onclose handle reconnection.
-      // We close explicitly here to ensure onclose fires in all environments.
-      ws.close()
-    }
-  }, [roomId])
-
-  // Connect on mount; clean up on unmount or when roomId changes
+  // Forward incoming WS events to options.onMessage.
+  // We create a stable reference to options via the closure so the listener
+  // always sees the latest callbacks without the effect needing to re-run.
   useEffect(() => {
-    intentionalCloseRef.current = false
-    attemptRef.current = 0
-    setStatus('connecting')
-    connect()
+    return ctx.addListener((event, payload) => {
+      if (event === 'new_message' || event === 'message_ack') {
+        options?.onMessage?.({ event, payload })
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctx])
 
-    return () => {
-      intentionalCloseRef.current = true
-      clearTimer()
-      wsRef.current?.close()
-      wsRef.current = null
-    }
-  }, [connect, clearTimer])
-
-  const send = useCallback((data: unknown) => {
-    const ws = wsRef.current
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(data))
-    }
-    // No-op when not connected
-  }, [])
-
-  const disconnect = useCallback(() => {
-    intentionalCloseRef.current = true
-    clearTimer()
-    wsRef.current?.close()
-    wsRef.current = null
-    setStatus('disconnected')
-  }, [clearTimer])
-
-  return { send, status, disconnect }
+  return {
+    /** Sends a `send_message` event through the shared WS connection. */
+    send: (data: unknown) => ctx.send('send_message', data),
+    /** Current connection status — driven by WsProvider, triggers re-renders. */
+    status: ctx.status,
+    /** Disconnect the shared WS connection (delegates to wsManager). */
+    disconnect: () => wsManager.disconnect(),
+  }
 }

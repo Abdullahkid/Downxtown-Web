@@ -10,10 +10,10 @@
  *  - Follow/Unfollow: optimistic update via api.post/delete
  *  - Share: Web Share API with clipboard fallback
  *  - Contact: tel: link or WhatsApp deep link
- *  - Message: navigates to /chat with store context
+ *  - Message: POST /chat/create then navigate to /chat/[chatRoomId] (Req 3.1–3.8)
  *  - Logs store_click analytics event on mount (Req 25.2)
  *
- * Requirements: 9.1, 9.2, 9.10, 9.11, 9.12
+ * Requirements: 9.1, 9.2, 9.10, 9.11, 9.12, 3.1, 3.2, 3.5, 3.6, 3.7, 3.8
  */
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
@@ -27,10 +27,13 @@ import {
   Phone,
   ChevronLeft,
   Search,
+  Loader2,
 } from 'lucide-react'
 import { ImageLoader } from '@/lib/image/imageLoader'
 import { api } from '@/lib/api/apiClient'
 import { logStoreClick } from '@/lib/analytics/analyticsProvider'
+import { useAuthStore } from '@/store/authStore'
+import { useUiStore } from '@/store/uiStore'
 import type { StoreProfile } from '@/types/store'
 
 // ---------------------------------------------------------------------------
@@ -86,7 +89,13 @@ export function StoreHeader({ store }: StoreHeaderProps) {
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isFollowing, setIsFollowing] = useState(store.isFollowing)
   const [followLoading, setFollowLoading] = useState(false)
+  const [messageLoading, setMessageLoading] = useState(false)
   const [shareToast, setShareToast] = useState(false)
+
+  const authStatus = useAuthStore((s) => s.status)
+  const addToast = useUiStore((s) => s.addToast)
+
+  const isAuthenticated = authStatus === 'authenticated'
 
   // ── Analytics: log store_click on mount (Req 25.2) ──────────────────────
   useEffect(() => {
@@ -169,10 +178,26 @@ export function StoreHeader({ store }: StoreHeaderProps) {
     }
   }, [store.phoneNumber, store.whatsappNumber])
 
-  // ── Message (Req 9.10) ───────────────────────────────────────────────────
-  const handleMessage = useCallback(() => {
-    router.push(`/chat?storeId=${store.id}`)
-  }, [router, store.id])
+  // ── Message (Req 3.1, 3.2, 3.5, 3.6, 3.7, 3.8) ──────────────────────────
+  const handleMessage = useCallback(async () => {
+    if (messageLoading) return
+    setMessageLoading(true)
+    try {
+      const { chatRoomId } = await api.post<{ chatRoomId: string }>('/chat/create', {
+        targetUserId: store.id,
+        targetUserType: 'BUSINESS',
+      })
+      router.push(`/chat/${chatRoomId}`)
+    } catch {
+      addToast({
+        id: `msg-err-${Date.now()}`,
+        message: 'Could not start a chat. Please try again.',
+        type: 'error',
+      })
+    } finally {
+      setMessageLoading(false)
+    }
+  }, [messageLoading, store.id, router, addToast])
 
   const hasContact = !!(store.phoneNumber || store.whatsappNumber)
 
@@ -203,20 +228,28 @@ export function StoreHeader({ store }: StoreHeaderProps) {
         {!compact && (isFollowing ? 'Following' : 'Follow')}
       </button>
 
-      {/* Message */}
-      <button
-        type="button"
-        onClick={handleMessage}
-        aria-label="Message store"
-        className={[
-          'flex items-center justify-center rounded-full',
-          'min-h-[44px] min-w-[44px] border border-gray-300 bg-white text-gray-700',
-          'hover:bg-gray-50 active:bg-gray-100 transition-colors',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400',
-        ].join(' ')}
-      >
-        <MessageCircle size={18} aria-hidden="true" />
-      </button>
+      {/* Message — visible only to authenticated buyers (Req 3.7) */}
+      {isAuthenticated && (
+        <button
+          type="button"
+          onClick={handleMessage}
+          disabled={messageLoading}
+          aria-label="Message store"
+          className={[
+            'flex items-center justify-center rounded-full',
+            'min-h-[44px] min-w-[44px] border border-gray-300 bg-white text-gray-700',
+            'hover:bg-gray-50 active:bg-gray-100 transition-colors',
+            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400',
+            messageLoading ? 'opacity-60 cursor-not-allowed' : '',
+          ].join(' ')}
+        >
+          {messageLoading ? (
+            <Loader2 size={18} aria-hidden="true" className="animate-spin" />
+          ) : (
+            <MessageCircle size={18} aria-hidden="true" />
+          )}
+        </button>
+      )}
 
       {/* Share */}
       <button

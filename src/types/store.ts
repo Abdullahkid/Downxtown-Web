@@ -69,6 +69,8 @@ export interface StoreCategoryProduct {
 export interface StoreCategory {
   id: string
   name: string
+  /** imageUrl for the category — may be a full CDN URL (Shopify imports) or a Downxtown imageId */
+  imageUrl?: string
   productCount: number
   products: StoreCategoryProduct[]
 }

@@ -14,12 +14,12 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: 'Googlebot',
-        allow: ['/', '/store/', '/product/', '/search', '/welcome'],
+        allow: ['/', '/store/', '/product/', '/search', '/category/', '/welcome'],
         disallow: ['/checkout', '/orders', '/profile', '/chat', '/auth'],
       },
       {
         userAgent: '*',
-        allow: ['/', '/store/', '/product/', '/search', '/welcome'],
+        allow: ['/', '/store/', '/product/', '/search', '/category/', '/welcome'],
         disallow: ['/checkout', '/orders', '/profile', '/chat', '/auth'],
       },
     ],

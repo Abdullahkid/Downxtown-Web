@@ -2,6 +2,7 @@
  * Root layout — Server Component.
  *
  * Responsibilities:
+ *  - Global SEO: title template, default OG metadata, Organization + WebSite JSON-LD
  *  - PWA meta tags (manifest, theme-color, apple-mobile-web-app-capable, viewport)
  *  - Wraps the entire app in:
  *      ErrorBoundary → QueryProvider → AuthProvider → {children}
@@ -10,12 +11,19 @@
  */
 
 import type { Metadata, Viewport } from 'next'
+import Script from 'next/script'
 import { DM_Sans, Bebas_Neue, DM_Serif_Display, Archivo } from 'next/font/google'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
 import { OfflineBanner } from '@/components/shared/OfflineBanner'
 import './globals.css'
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const SITE_URL = 'https://downxtown.com'
 
 // ---------------------------------------------------------------------------
 // Fonts
@@ -51,24 +59,84 @@ const archivo = Archivo({
 })
 
 // ---------------------------------------------------------------------------
-// PWA + SEO metadata
+// SEO metadata
 // ---------------------------------------------------------------------------
 
+/**
+ * Root metadata is the fallback for every page in the app.
+ *
+ * Title template:
+ *   - Pages that export their own title (e.g. "Rockstar Stitch T-Shirt") get:
+ *     "Rockstar Stitch T-Shirt — Downxtown"
+ *   - Pages that don't export a title fall back to the `default` string.
+ *
+ * OpenGraph / Twitter:
+ *   - Shared across every page as a baseline.
+ *   - Individual pages (product, store) override these via generateMetadata.
+ *
+ * OG image: /public/app-feed.png — the app feed screenshot is the best
+ * representation of the platform for social link previews.
+ * Recommended dimensions: 1200×630px. Replace this file with a properly
+ * designed 1200×630 graphic when one is available.
+ */
 export const metadata: Metadata = {
-  title: 'Downxtown',
-  description: 'Discover local stores and products near you',
-  // Links <link rel="manifest" href="/manifest.json"> in the <head>
+  // Title template — child pages set their own title and get "… — Downxtown" appended.
+  // The default is shown when no child page sets a title (e.g. /auth/* routes).
+  title: {
+    default: 'Downxtown — Discover & Follow Indian D2C Brands',
+    template: '%s — Downxtown',
+  },
+  description:
+    'Shop from India\'s best D2C brands. Follow brands, get their latest drops in your feed, and discover local stores near you — only on Downxtown.',
+
+  // Canonical base URL — Next.js appends the page path automatically
+  metadataBase: new URL(SITE_URL),
+
+  // Tells Google this site targets Indian users
+  alternates: {
+    canonical: SITE_URL,
+  },
+
+  // Open Graph — baseline for all pages
+  openGraph: {
+    type: 'website',
+    siteName: 'Downxtown',
+    url: SITE_URL,
+    title: 'Downxtown — Discover & Follow Indian D2C Brands',
+    description:
+      'Shop from India\'s best D2C brands. Follow brands, get their latest drops in your feed, and discover local stores near you.',
+    images: [
+      {
+        // /public/app-feed.png — replace with a 1200×630 branded OG image
+        url: '/app-feed.png',
+        width: 1200,
+        height: 630,
+        alt: 'Downxtown — Brand feed showing D2C stores and products',
+      },
+    ],
+    locale: 'en_IN',
+  },
+
+  // Twitter / X Card — shown when sharing any Downxtown link on X or other platforms
+  // that read twitter: meta tags (WhatsApp, Telegram, Slack all do).
+  // twitter:site is omitted — no X account exists yet. Add it when one is created.
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Downxtown — Discover & Follow Indian D2C Brands',
+    description:
+      'Shop from India\'s best D2C brands. Follow brands, get their latest drops in your feed.',
+    images: ['/app-feed.png'],
+  },
+
+  // PWA
   manifest: '/manifest.json',
   icons: {
-    // favicon.ico in src/app/ is auto-served by Next.js at /favicon.ico
-    // Google picks up the 32x32 PNG as the search result favicon
     icon: [
       { url: '/icons/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
       { url: '/icons/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
       { url: '/icons/icon-192.png',      sizes: '192x192', type: 'image/png' },
       { url: '/icons/icon-512.png',      sizes: '512x512', type: 'image/png' },
     ],
-    // Apple home screen icon
     apple: [
       { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
@@ -89,6 +157,70 @@ export const viewport: Viewport = {
 }
 
 // ---------------------------------------------------------------------------
+// Structured data — Organization + WebSite (site-wide, rendered once)
+// ---------------------------------------------------------------------------
+
+/**
+ * Two Schema.org entities declared at the root level:
+ *
+ * 1. Organization — declares Downxtown as a named entity. This is what
+ *    eventually gets Google to show a Knowledge Panel for the platform itself,
+ *    and links all store entities back to it via the platform's @id.
+ *
+ * 2. WebSite + SearchAction — enables Google's Sitelinks Searchbox feature.
+ *    When Google shows downxtown.com in search results, users can type a search
+ *    query directly in the SERP and land on /search?q={query}.
+ *
+ * Both use @graph so they share a single <script> tag.
+ */
+const organizationJsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      '@id': `${SITE_URL}/#organization`,
+      name: 'Downxtown',
+      url: SITE_URL,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/icons/icon-512.png`,
+        width: 512,
+        height: 512,
+      },
+      description:
+        'Brand commerce platform connecting Indian D2C brands with customers. Discover, follow, and shop from local brands.',
+      foundingLocation: {
+        '@type': 'Place',
+        name: 'Lucknow, Uttar Pradesh, India',
+      },
+      areaServed: 'IN',
+      // sameAs links this entity to Downxtown's known social profiles.
+      // Add more entries (LinkedIn, Twitter/X, YouTube) when accounts exist.
+      sameAs: [
+        'https://www.instagram.com/downxtown_007',
+      ],
+    },
+    {
+      '@type': 'WebSite',
+      '@id': `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: 'Downxtown',
+      publisher: { '@id': `${SITE_URL}/#organization` },
+      // SearchAction enables Google's Sitelinks Searchbox in SERPs.
+      // Users can search downxtown.com directly from the search result.
+      potentialAction: {
+        '@type': 'SearchAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: `${SITE_URL}/search?q={search_term_string}`,
+        },
+        'query-input': 'required name=search_term_string',
+      },
+    },
+  ],
+})
+
+// ---------------------------------------------------------------------------
 // Root layout
 // ---------------------------------------------------------------------------
 
@@ -98,25 +230,40 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${dmSans.variable} ${bebasNeue.variable} ${dmSerifDisplay.variable} ${archivo.variable}`}>
+    // lang="en-IN" — signals to Google that this is English content targeting
+    // Indian users, improving geo-relevance for Tier 2/3 city queries.
+    <html lang="en-IN" className={`${dmSans.variable} ${bebasNeue.variable} ${dmSerifDisplay.variable} ${archivo.variable}`}>
       <body suppressHydrationWarning>
+        {/* Google Analytics 4 — loads after page is interactive (afterInteractive)
+            so it never blocks rendering or Core Web Vitals scores. */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-P479RX9Y8J"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-P479RX9Y8J');
+          `}
+        </Script>
         {/*
-         * ErrorBoundary is outermost so it catches errors from any provider
-         * or page component. It is a client component (class-based) but can
-         * be rendered inside a Server Component — Next.js handles the
-         * client/server boundary automatically.
+         * Organization + WebSite JSON-LD — injected once at the root level.
+         * Uses next/script with strategy="beforeInteractive" so it's present
+         * in the initial HTML that Googlebot receives, not deferred.
          */}
+        <Script
+          id="org-jsonld"
+          type="application/ld+json"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: organizationJsonLd }}
+        />
+
         <ErrorBoundary>
           <QueryProvider>
             <AuthProvider>
               {children}
-              {/*
-               * OfflineBanner is rendered inside AuthProvider so it has
-               * access to the same client boundary, but outside {children}
-               * so it overlays every page without being re-mounted on
-               * navigation. It is a fixed-position element and does not
-               * affect document flow.
-               */}
               <OfflineBanner />
             </AuthProvider>
           </QueryProvider>

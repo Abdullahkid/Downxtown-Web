@@ -1,25 +1,26 @@
 'use client'
 
 /**
- * StoreCategories — expandable category list with products.
+ * StoreCategories — image card grid of store collections.
  *
- * Each category row can be expanded to reveal its product grid.
- * Tapping a product navigates to the Product Page.
+ * Each card shows the collection image, name, and product count.
+ * Tapping a card navigates to /store/{username}/collection/{categoryId}
+ * — a dedicated server-rendered page with its own URL, metadata, and
+ * JSON-LD, making each collection indexable by Google.
  *
  * Requirements: 9.7
  */
 
-import React, { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import React from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, ChevronUp } from 'lucide-react'
-import { ImageLoader } from '@/lib/image/imageLoader'
+import { Package } from 'lucide-react'
 import { ShimmerCard } from '@/components/shared/ShimmerCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ErrorState } from '@/components/shared/ErrorState'
-import { formatPrice } from '@/lib/utils/urlBuilders'
 import { api } from '@/lib/api/apiClient'
-import type { StoreCategory, StoreCategoryProduct, StoreCategoriesResponse } from '@/types/store'
+import type { StoreCategory } from '@/types/store'
 
 // ---------------------------------------------------------------------------
 // Props
@@ -27,179 +28,77 @@ import type { StoreCategory, StoreCategoryProduct, StoreCategoriesResponse } fro
 
 interface StoreCategoriesProps {
   storeId: string
+  storeUsername: string
 }
 
 // ---------------------------------------------------------------------------
-// Category row
+// Category card
 // ---------------------------------------------------------------------------
 
-function CategoryRow({ category, storeId }: { category: StoreCategory; storeId: string }) {
-  const router = useRouter()
-  const [expanded, setExpanded] = useState(false)
-  const [products, setProducts] = useState<StoreCategoryProduct[]>([])
-  const [loadingProducts, setLoadingProducts] = useState(false)
-
-  const toggle = useCallback(async () => {
-    const next = !expanded
-    setExpanded(next)
-    if (next && products.length === 0) {
-      setLoadingProducts(true)
-      try {
-        const res = await api.get<{
-          success: boolean
-          data: {
-            category: { id: string; name: string; productCount: number }
-            products: {
-              items: Array<{
-                id: string
-                title?: string
-                name?: string
-                mainImageUrl?: string
-                sellingPrice: number
-                mrp?: number
-              }>
-            }
-          } | null
-        }>(`/stores/${storeId}/categories/${category.id}/products`, { auth: false })
-        if (res.success && res.data) {
-          setProducts(res.data.products.items.map(p => ({
-            id: p.id,
-            name: p.title ?? p.name ?? '',
-            mainImageUrl: p.mainImageUrl ?? '',
-            sellingPrice: p.sellingPrice,
-            mrp: p.mrp ?? p.sellingPrice,
-          })))
-        }
-      } catch {
-        // silently fail — empty state shown
-      } finally {
-        setLoadingProducts(false)
-      }
-    }
-  }, [expanded, products.length, storeId, category.id])
+function CategoryCard({
+  category,
+  storeUsername,
+}: {
+  category: StoreCategory
+  storeUsername: string
+}) {
+  const href = `/store/${storeUsername}/collection/${category.id}`
+  const hasImage = Boolean(category.imageUrl)
 
   return (
-    <div className="border-b border-gray-100 last:border-b-0">
-      {/* Header row */}
-      <button
-        type="button"
-        onClick={toggle}
-        aria-expanded={expanded}
-        aria-controls={`category-products-${category.id}`}
-        className={[
-          'flex w-full items-center justify-between px-4 py-3.5',
-          'text-left transition-colors hover:bg-gray-50 active:bg-gray-100',
-          'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-color,#6366f1)]',
-          'min-h-[52px]',
-        ].join(' ')}
-      >
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-gray-900">
-            {category.name}
-          </span>
-          <span className="text-xs text-gray-400">
-            {category.productCount} product{category.productCount !== 1 ? 's' : ''}
-          </span>
-        </div>
-        {expanded ? (
-          <ChevronUp size={18} className="text-gray-500 shrink-0" aria-hidden="true" />
+    <Link
+      href={href}
+      className={[
+        'group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white',
+        'shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-150',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
+        'focus-visible:outline-[var(--brand-color,#6366f1)]',
+      ].join(' ')}
+      aria-label={`${category.name} — ${category.productCount} products`}
+    >
+      {/* Category image */}
+      <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
+        {hasImage ? (
+          <Image
+            src={category.imageUrl!}
+            alt={category.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            unoptimized={category.imageUrl!.startsWith('https://cdn.shopify.com')}
+          />
         ) : (
-          <ChevronDown size={18} className="text-gray-500 shrink-0" aria-hidden="true" />
+          <div className="flex h-full w-full items-center justify-center bg-gray-100">
+            <Package size={32} className="text-gray-300" aria-hidden="true" />
+          </div>
         )}
-      </button>
+      </div>
 
-      {/* Expandable product grid */}
-      {expanded && (
-        <div
-          id={`category-products-${category.id}`}
-          className="grid grid-cols-2 gap-3 px-4 pb-4"
-        >
-          {loadingProducts ? (
-            <div className="col-span-2 py-4 flex justify-center">
-              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : products.length === 0 ? (
-            <p className="col-span-2 py-4 text-center text-sm text-gray-400">
-              No products in this category yet.
-            </p>
-          ) : (
-            products.map((product) => {
-              const discount =
-                product.mrp > product.sellingPrice
-                  ? Math.round(
-                      ((product.mrp - product.sellingPrice) / product.mrp) * 100,
-                    )
-                  : 0
-
-              return (
-                <button
-                  key={product.id}
-                  type="button"
-                  onClick={() => router.push(`/product/${product.id}`)}
-                  className={[
-                    'group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white',
-                    'text-left shadow-sm hover:shadow-md active:scale-[0.98]',
-                    'transition-all duration-150',
-                    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-color,#6366f1)]',
-                  ].join(' ')}
-                  aria-label={`${product.name}, ${formatPrice(product.sellingPrice)}`}
-                >
-                  <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
-                    <ImageLoader
-                      imageId={product.mainImageUrl}
-                      endpoint="detail"
-                      alt={product.name}
-                      fill
-                      imageContext="product"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      className="transition-transform duration-200 group-hover:scale-105"
-                    />
-                    {discount > 0 && (
-                      <span className="absolute left-2 top-2 rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                        {discount}% off
-                      </span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-0.5 p-2.5">
-                    <p className="line-clamp-2 text-xs font-medium text-gray-800 leading-snug">
-                      {product.name}
-                    </p>
-                    <div className="flex items-baseline gap-1.5 mt-1">
-                      <span className="text-sm font-bold text-gray-900">
-                        {formatPrice(product.sellingPrice)}
-                      </span>
-                      {product.mrp > product.sellingPrice && (
-                        <span className="text-xs text-gray-400 line-through">
-                          {formatPrice(product.mrp)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              )
-            })
-          )}
-        </div>
-      )}
-    </div>
+      {/* Info */}
+      <div className="flex flex-col gap-0.5 p-3">
+        <p className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">
+          {category.name}
+        </p>
+        <p className="text-xs text-gray-400 mt-0.5">
+          {category.productCount} product{category.productCount !== 1 ? 's' : ''}
+        </p>
+      </div>
+    </Link>
   )
 }
 
 // ---------------------------------------------------------------------------
-// Shimmer
+// Shimmer grid
 // ---------------------------------------------------------------------------
 
 function CategoriesShimmer() {
   return (
-    <div className="flex flex-col gap-0">
-      {Array.from({ length: 5 }, (_, i) => (
-        <div key={i} className="flex items-center justify-between border-b border-gray-100 px-4 py-3.5">
-          <div className="flex flex-col gap-1.5">
-            <ShimmerCard height={14} className="w-32 rounded" />
-            <ShimmerCard height={10} className="w-20 rounded" />
-          </div>
-          <ShimmerCard height={18} className="w-5 rounded" />
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-4 pb-6">
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="flex flex-col gap-2">
+          <ShimmerCard className="aspect-square w-full rounded-2xl" />
+          <ShimmerCard height={14} className="w-3/4 rounded" />
+          <ShimmerCard height={10} className="w-1/2 rounded" />
         </div>
       ))}
     </div>
@@ -210,11 +109,10 @@ function CategoriesShimmer() {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function StoreCategories({ storeId }: StoreCategoriesProps) {
-  const { data, isLoading, error, refetch } = useQuery<StoreCategoriesResponse, Error>({
+export function StoreCategories({ storeId, storeUsername }: StoreCategoriesProps) {
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['store-categories', storeId],
     queryFn: async () => {
-      // Backend returns ApiResponse<PaginatedResponse<StoreCategoryResponse>>
       const res = await api.get<{
         success: boolean
         data: {
@@ -231,17 +129,15 @@ export function StoreCategories({ storeId }: StoreCategoriesProps) {
         } | null
       }>(`/stores/${storeId}/categories`, { auth: false })
 
-      if (!res.success || !res.data) return { categories: [] }
+      if (!res.success || !res.data) return []
 
-      // Map to the StoreCategoriesResponse shape the component expects
-      return {
-        categories: res.data.items.map(item => ({
-          id: item.id,
-          name: item.name,
-          productCount: item.productCount,
-          products: [], // Products loaded separately when expanded
-        })),
-      }
+      return res.data.items.map<StoreCategory>((item) => ({
+        id: item.id,
+        name: item.name,
+        imageUrl: item.imageUrl,
+        productCount: item.productCount,
+        products: [],
+      }))
     },
     staleTime: 5 * 60 * 1000,
   })
@@ -250,28 +146,33 @@ export function StoreCategories({ storeId }: StoreCategoriesProps) {
 
   if (error) {
     return (
-      <ErrorState
-        message="Failed to load categories"
-        onRetry={() => refetch()}
-      />
+      <div className="px-4">
+        <ErrorState message="Failed to load collections" onRetry={() => refetch()} />
+      </div>
     )
   }
 
-  const categories = data?.categories ?? []
+  const categories = data ?? []
 
   if (categories.length === 0) {
     return (
-      <EmptyState
-        heading="No categories yet"
-        body="This store hasn't organised its products into categories."
-      />
+      <div className="px-4">
+        <EmptyState
+          heading="No collections yet"
+          body="This store hasn't organised its products into collections."
+        />
+      </div>
     )
   }
 
   return (
-    <div className="pb-6">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-4 pb-6 pt-3">
       {categories.map((category) => (
-        <CategoryRow key={category.id} category={category} storeId={storeId} />
+        <CategoryCard
+          key={category.id}
+          category={category}
+          storeUsername={storeUsername}
+        />
       ))}
     </div>
   )

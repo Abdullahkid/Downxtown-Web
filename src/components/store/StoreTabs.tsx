@@ -82,7 +82,7 @@ export function StoreTabs({ storeId, storeUsername }: StoreTabsProps) {
           <StoreProductGrid storeId={storeId} storeUsername={storeUsername} />
         )}
         {activeTab === 'categories' && (
-          <StoreCategories storeId={storeId} />
+          <StoreCategories storeId={storeId} storeUsername={storeUsername} />
         )}
         {activeTab === 'reviews' && (
           <StoreReviews storeId={storeId} />

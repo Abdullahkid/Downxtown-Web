@@ -13,9 +13,15 @@ import Link from 'next/link'
 import { AppBar, BottomNav, SideRail, PageShell } from '@/components/layout'
 import { ToastContainer } from '@/components/shared'
 
-// Public pages use Firebase auth state, IndexedDB (offline queue), and
-// real-time API data — none of which are available during static prerendering.
-export const dynamic = 'force-dynamic'
+// Do NOT set `export const dynamic = 'force-dynamic'` here.
+// Doing so overrides the `next: { revalidate }` ISR settings in individual
+// page components (product page: 60s, store page: 60s), forcing every request
+// to hit the server cold and destroying Core Web Vitals scores.
+//
+// Firebase auth state, IndexedDB, and real-time data are all handled inside
+// client components (AppBar, SearchPage, feed cards) which run on the client
+// regardless of the layout's caching strategy. The layout shell itself has
+// no runtime data dependencies and is safe to cache at the edge.
 
 /**
  * Slim site-wide footer â€” visible on all public pages.

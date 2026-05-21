@@ -1,20 +1,33 @@
 /**
  * Product Page — Next.js Server Component (SSR).
  *
- * Responsibilities:
- *  - Fetch product data server-side for SEO
- *  - Generate <head> metadata: title, description, Open Graph, Twitter Card,
- *    canonical link, robots meta
- *  - Inject Schema.org Product + Offer JSON-LD structured data
- *  - Render the full product page layout with client components for
- *    interactivity (ImageGallery, VariantSelector, ProductReview, video player,
- *    wishlist button, related products)
+ * URL format: /product/{slug}-{objectId}
+ *   e.g. /product/rockstar-stitch-oversized-t-shirt-1-695d5897429a7676c733204c
+ *
+ * The route param is named [slug] but the actual MongoDB ObjectId is always
+ * the last 24 lowercase hex characters of the slug. This function extracts it
+ * and calls the existing /api/v1/products/{productId}/page endpoint unchanged.
+ * The backend never sees the slug — only the ObjectId — so Sigma2 (Android app)
+ * is completely unaffected.
+ *
+ * REDIRECT BEHAVIOUR:
+ * If a user (or internal link) arrives at the bare-ID form
+ * (/product/695d5897429a7676c733204c), the page fetches the product, builds the
+ * canonical slug URL, and issues a 308 permanent redirect to it. This means:
+ *  - All existing links in the app (feed cards, search results, store grids, etc.)
+ *    continue to work — they just get silently redirected to the slug URL.
+ *  - Google receives a 308 and updates its index to the slug URL.
+ *  - Users always see the pretty URL in the address bar.
+ *
+ * Legacy URLs (/product/{24-hex-objectId} with no slug prefix) are handled the
+ * same way — the 24-char segment passes extractProductId, the product is fetched,
+ * and then the redirect fires.
  *
  * Requirements: 10.1–10.14, 21.2, 21.5–21.7, 25.3, 29.2–29.3, 30.1–30.5
  */
 
 import type { Metadata } from 'next'
-import { notFound } from 'next/navigation'
+import { notFound, permanentRedirect } from 'next/navigation'
 import type { Product, MiniProduct, ImageGroup } from '@/types/product'
 import { buildProductUrl, formatPrice } from '@/lib/utils/urlBuilders'
 import { buildImageUrl } from '@/lib/image/imageUrls'
@@ -26,6 +39,39 @@ import { ProductPageClient } from './ProductPageClient'
 
 const API_BASE = 'https://api.downxtown.com'
 const SITE_URL = 'https://downxtown.com'
+
+/** Truncates a slug to first MAX_WORDS words, with MAX_CHARS as a hard safety-net cap.
+ *  Mirrors truncateSlug() in urlBuilders.ts and buildProductSlug() in SitemapRoutes.kt exactly.
+ */
+function truncateSlug(slug: string, maxWords = 6, maxChars = 75): string {
+  const words = slug.split('-').filter(Boolean)
+  const wordCapped = words.slice(0, maxWords).join('-')
+  if (wordCapped.length <= maxChars) return wordCapped
+  const truncated = wordCapped.substring(0, maxChars)
+  const lastHyphen = truncated.lastIndexOf('-')
+  return lastHyphen > 0 ? truncated.substring(0, lastHyphen) : truncated
+}
+
+/** MongoDB ObjectId is always exactly 24 lowercase hex characters. */
+const OBJECT_ID_RE = /^[a-f0-9]{24}$/
+
+// ---------------------------------------------------------------------------
+// Slug → productId extraction
+// ---------------------------------------------------------------------------
+
+/**
+ * Extracts the MongoDB ObjectId from a slug param.
+ *
+ * The slug is either:
+ *  - "{human-readable-slug}-{24-hex-objectId}"  e.g. "rockstar-stitch-1-695d5897429a7676c733204c"
+ *  - "{24-hex-objectId}"                        e.g. "695d5897429a7676c733204c"  (legacy)
+ *
+ * In both cases the ObjectId is the last 24 characters.
+ */
+function extractProductId(slug: string): string | null {
+  const id = slug.slice(-24)
+  return OBJECT_ID_RE.test(id) ? id : null
+}
 
 // ---------------------------------------------------------------------------
 // Data fetching helpers
@@ -126,9 +172,18 @@ async function fetchRelatedProducts(_productId: string): Promise<MiniProduct[]> 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ productId: string }>
+  params: Promise<{ slug: string }>
 }): Promise<Metadata> {
-  const { productId } = await params
+  const { slug } = await params
+  const productId = extractProductId(slug)
+
+  if (!productId) {
+    return {
+      title: 'Product Not Found — Downxtown',
+      robots: { index: false, follow: false },
+    }
+  }
+
   const product = await fetchProduct(productId)
 
   if (!product) {
@@ -145,7 +200,9 @@ export async function generateMetadata({
     ? buildImageUrl('detail', firstImageId)
     : undefined
 
-  const canonicalUrl = `${SITE_URL}${buildProductUrl(productId)}`
+  // Canonical URL always uses the SEO slug form so all links converge to one URL
+  const canonicalUrl = `${SITE_URL}${buildProductUrl(productId, product.shopifyHandle)}`
+
   const defaultVariant = product.variants[0]
   const price = defaultVariant
     ? formatPrice(defaultVariant.sellingPrice)
@@ -166,7 +223,7 @@ export async function generateMetadata({
       index: true,
       follow: true,
     },
-    // Req 21.5 — canonical link
+    // Req 21.5 — canonical link always points to the slug URL
     alternates: {
       canonical: canonicalUrl,
     },
@@ -214,17 +271,37 @@ function buildJsonLd(product: Product, productId: string): string {
       ? 'https://schema.org/InStock'
       : 'https://schema.org/OutOfStock'
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
+  // Canonical product URL with SEO slug
+  const productUrl = `${SITE_URL}${buildProductUrl(productId, product.shopifyHandle)}`
+  const storeUrl = product.storeUsername
+    ? `${SITE_URL}/store/${product.storeUsername}`
+    : undefined
+
+  // Product entity
+  const productSchema: Record<string, unknown> = {
     '@type': 'Product',
+    '@id': `${productUrl}#product`,
     name: product.name,
     description: product.description,
     brand: {
       '@type': 'Brand',
-      name: product.brandName,
+      name: product.brandName || undefined,
     },
     image: imageUrl ? [imageUrl] : undefined,
-    url: `${SITE_URL}${buildProductUrl(productId)}`,
+    url: productUrl,
+    // seller links the product to the store entity on Downxtown.
+    // Google uses this to build Knowledge Graph connections between products
+    // and brands — eventually surfacing Downxtown store pages in branded
+    // product searches (e.g. "Bonkers Corner tshirt").
+    ...(storeUrl
+      ? {
+          seller: {
+            '@type': 'Organization',
+            '@id': `${storeUrl}#business`,
+            url: storeUrl,
+          },
+        }
+      : {}),
     aggregateRating:
       product.averageRating > 0
         ? {
@@ -232,6 +309,9 @@ function buildJsonLd(product: Product, productId: string): string {
             ratingValue: product.averageRating.toFixed(1),
             bestRating: '5',
             worstRating: '1',
+            // reviewCount is intentionally omitted here — the backend does not
+            // currently return a review count on the product page endpoint.
+            // Once the backend includes it, add: reviewCount: product.reviewCount
           }
         : undefined,
     offers: defaultVariant
@@ -240,7 +320,10 @@ function buildJsonLd(product: Product, productId: string): string {
           priceCurrency: 'INR',
           price: defaultVariant.sellingPrice.toFixed(2),
           availability,
-          url: `${SITE_URL}${buildProductUrl(productId)}`,
+          url: productUrl,
+          seller: storeUrl
+            ? { '@type': 'Organization', '@id': `${storeUrl}#business` }
+            : undefined,
           priceValidUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split('T')[0],
@@ -248,7 +331,50 @@ function buildJsonLd(product: Product, productId: string): string {
       : undefined,
   }
 
-  return JSON.stringify(jsonLd)
+  // BreadcrumbList — shown as a breadcrumb trail under the URL in SERPs.
+  // Increases click-through rate by showing users where the page sits in the
+  // site hierarchy before they click.
+  // Structure: Downxtown → Store Name → Product Name
+  const breadcrumb: Record<string, unknown> = {
+    '@type': 'BreadcrumbList',
+    '@id': `${productUrl}#breadcrumb`,
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Downxtown',
+        item: SITE_URL,
+      },
+      ...(storeUrl && product.storeUsername
+        ? [
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: product.brandName || product.storeUsername,
+              item: storeUrl,
+            },
+            {
+              '@type': 'ListItem',
+              position: 3,
+              name: product.name,
+              item: productUrl,
+            },
+          ]
+        : [
+            {
+              '@type': 'ListItem',
+              position: 2,
+              name: product.name,
+              item: productUrl,
+            },
+          ]),
+    ],
+  }
+
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [productSchema, breadcrumb],
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -256,11 +382,17 @@ function buildJsonLd(product: Product, productId: string): string {
 // ---------------------------------------------------------------------------
 
 interface ProductPageProps {
-  params: Promise<{ productId: string }>
+  params: Promise<{ slug: string }>
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
-  const { productId } = await params
+  const { slug } = await params
+
+  // Extract MongoDB ObjectId from the slug — 404 if the slug is malformed
+  const productId = extractProductId(slug)
+  if (!productId) {
+    notFound()
+  }
 
   // Fetch product and related products in parallel
   const [product, relatedProducts] = await Promise.all([
@@ -270,6 +402,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (!product) {
     notFound()
+  }
+
+  // -------------------------------------------------------------------------
+  // Canonical redirect — 308 Permanent
+  //
+  // If the current slug is not already the canonical form, redirect to it.
+  // This covers:
+  //  1. Bare-ID links: /product/695d5897429a7676c733204c
+  //     → /product/rockstar-stitch-oversized-t-shirt-1-695d5897429a7676c733204c
+  //  2. Any stale slug that differs from the current shopifyHandle
+  //
+  // The canonical slug is "{shopifyHandle}-{id}" (or bare id if no handle).
+  // We compare the incoming slug to the canonical form so we don't redirect
+  // on every request — only when the slug is wrong or missing.
+  // -------------------------------------------------------------------------
+  const canonicalSlug = product.shopifyHandle
+    ? `${truncateSlug(product.shopifyHandle)}-${productId}`
+    : productId
+
+  if (slug !== canonicalSlug) {
+    permanentRedirect(`/product/${canonicalSlug}`)
   }
 
   const jsonLd = buildJsonLd(product, productId)

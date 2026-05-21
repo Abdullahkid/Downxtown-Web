@@ -12,21 +12,46 @@ import {
   formatDate,
 } from './urlBuilders'
 
+// A real-looking 24-char hex ObjectId for tests
+const OBJECT_ID = '695d5897429a7676c733204c'
+
 // ---------------------------------------------------------------------------
 // buildProductUrl
 // ---------------------------------------------------------------------------
 describe('buildProductUrl', () => {
-  it('returns /product/{productId} for a simple id', () => {
-    expect(buildProductUrl('abc123')).toBe('/product/abc123')
+  it('returns /product/{id} when no slugBase is provided', () => {
+    expect(buildProductUrl(OBJECT_ID)).toBe(`/product/${OBJECT_ID}`)
   })
 
-  it('handles ids with hyphens and underscores', () => {
-    expect(buildProductUrl('prod-001_v2')).toBe('/product/prod-001_v2')
+  it('returns /product/{slugBase}-{id} when slugBase is provided', () => {
+    expect(buildProductUrl(OBJECT_ID, 'rockstar-stitch-oversized-t-shirt-1'))
+      .toBe(`/product/rockstar-stitch-oversized-t-shirt-1-${OBJECT_ID}`)
   })
 
-  it('handles a UUID-style id', () => {
-    const id = '550e8400-e29b-41d4-a716-446655440000'
-    expect(buildProductUrl(id)).toBe(`/product/${id}`)
+  it('falls back to id-only URL when slugBase is empty string', () => {
+    expect(buildProductUrl(OBJECT_ID, '')).toBe(`/product/${OBJECT_ID}`)
+  })
+
+  it('falls back to id-only URL when slugBase is null', () => {
+    expect(buildProductUrl(OBJECT_ID, null)).toBe(`/product/${OBJECT_ID}`)
+  })
+
+  it('truncates slugBase longer than 6 words to exactly 6 words', () => {
+    const longSlug = 'bacca-bucci-boundary-blazers-cricket-shoes-dynamic-flex-tech-superior'
+    // first 6 words → 'bacca-bucci-boundary-blazers-cricket-shoes'
+    const result = buildProductUrl(OBJECT_ID, longSlug)
+    const segment = result.replace('/product/', '').replace(`-${OBJECT_ID}`, '')
+    expect(segment).toBe('bacca-bucci-boundary-blazers-cricket-shoes')
+  })
+
+  it('does not truncate slugBase with 6 words or fewer', () => {
+    const shortSlug = 'rockstar-stitch-oversized-t-shirt-1'  // 5 words
+    expect(buildProductUrl(OBJECT_ID, shortSlug))
+      .toBe(`/product/rockstar-stitch-oversized-t-shirt-1-${OBJECT_ID}`)
+  })
+
+  it('falls back to id-only URL when slugBase is whitespace only', () => {
+    expect(buildProductUrl(OBJECT_ID, '   ')).toBe(`/product/${OBJECT_ID}`)
   })
 })
 
@@ -34,12 +59,18 @@ describe('buildProductUrl', () => {
 // parseProductId
 // ---------------------------------------------------------------------------
 describe('parseProductId', () => {
-  it('parses a relative product path', () => {
-    expect(parseProductId('/product/abc123')).toBe('abc123')
+  it('extracts ObjectId from SEO slug URL', () => {
+    expect(parseProductId(`/product/rockstar-stitch-oversized-t-shirt-1-${OBJECT_ID}`))
+      .toBe(OBJECT_ID)
   })
 
-  it('parses a full absolute URL', () => {
-    expect(parseProductId('https://downxtown.com/product/xyz789')).toBe('xyz789')
+  it('extracts ObjectId from legacy bare-id URL', () => {
+    expect(parseProductId(`/product/${OBJECT_ID}`)).toBe(OBJECT_ID)
+  })
+
+  it('parses a full absolute URL with slug', () => {
+    expect(parseProductId(`https://downxtown.com/product/my-product-${OBJECT_ID}`))
+      .toBe(OBJECT_ID)
   })
 
   it('returns null for a non-product path', () => {
@@ -54,11 +85,12 @@ describe('parseProductId', () => {
     expect(parseProductId('/product/')).toBeNull()
   })
 
-  it('round-trips: parseProductId(buildProductUrl(id)) === id', () => {
-    const ids = ['abc123', 'prod-001', 'ITEM_99', '550e8400-e29b-41d4-a716-446655440000']
-    for (const id of ids) {
-      expect(parseProductId(buildProductUrl(id))).toBe(id)
-    }
+  it('round-trips: parseProductId(buildProductUrl(id)) === id for legacy format', () => {
+    expect(parseProductId(buildProductUrl(OBJECT_ID))).toBe(OBJECT_ID)
+  })
+
+  it('round-trips: parseProductId(buildProductUrl(id, slug)) === id for slug format', () => {
+    expect(parseProductId(buildProductUrl(OBJECT_ID, 'classic-white-tee'))).toBe(OBJECT_ID)
   })
 })
 

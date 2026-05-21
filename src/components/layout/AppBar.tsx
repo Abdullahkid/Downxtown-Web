@@ -80,9 +80,9 @@ export function AppBar({
             <Image
               src="/logo-black.png"
               alt="Downxtown"
-              width={290}
+              width={220}
               height={80}
-              className="object-contain flex-shrink-0 block"
+              className="object-contain flex-shrink-0 block w-[150px] h-[60px] md:w-[220px] md:h-[80px]"
               priority
             />
           </Link>

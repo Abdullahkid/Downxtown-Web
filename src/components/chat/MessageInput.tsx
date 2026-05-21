@@ -6,14 +6,17 @@
  * - Textarea with send button for TEXT messages.
  * - Image upload button: uploads via `POST /upload`, then sends imageId via WebSocket.
  * - Share product/store actions: opens a picker modal.
+ * - Emits onTyping/onStopTyping callbacks so the parent can signal typing state to the WS_Manager.
+ * - When status === 'disconnected', renders a non-interactive "Connection unavailable" label
+ *   instead of the textarea and send button (Req 1.8).
  *
- * Requirements: 15.4, 15.5, 15.6
+ * Requirements: 1.8, 4.1, 4.2, 4.3, 4.4, 15.4, 15.5, 15.6
  */
 
 import React, { useRef, useState, useCallback, KeyboardEvent } from 'react'
 import { Send, ImageIcon, ShoppingBag, Store, X, Loader2 } from 'lucide-react'
 import { api } from '@/lib/api/apiClient'
-import type { OutgoingMessage } from '@/types/chat'
+import type { OutgoingMessage, WsStatus } from '@/types/chat'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,6 +29,12 @@ interface UploadResponse {
 export interface MessageInputProps {
   roomId: string
   onSend: (msg: OutgoingMessage) => void
+  /** Called on each keystroke when text.length > 0 — used to emit typing_started. */
+  onTyping?: () => void
+  /** Called on send or when text is cleared to empty — used to emit typing_stopped. */
+  onStopTyping?: () => void
+  /** Current WebSocket connection status. Renders a disabled label when 'disconnected'. */
+  status?: WsStatus
   disabled?: boolean
 }
 
@@ -110,31 +119,47 @@ function SharePicker({ mode, onShare, onClose }: SharePickerProps) {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function MessageInput({ roomId, onSend, disabled = false }: MessageInputProps) {
+export function MessageInput({ roomId, onSend, onTyping, onStopTyping, status, disabled = false }: MessageInputProps) {
   const [text, setText] = useState('')
   const [uploading, setUploading] = useState(false)
   const [shareMode, setShareMode] = useState<ShareMode>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
+  // When status is 'disconnected', the input is rendered as a non-interactive
+  // label per Req 1.8. Other disabled states (connecting, etc.) are handled by
+  // the existing `disabled` prop passed from the parent.
+  const isDisconnected = status === 'disconnected'
+
   // Auto-resize textarea
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setText(e.target.value)
+    const newText = e.target.value
+    setText(newText)
     // Reset height then set to scrollHeight for auto-grow
     const el = e.target
     el.style.height = 'auto'
     el.style.height = `${Math.min(el.scrollHeight, 120)}px`
-  }, [])
+
+    // Emit typing events (Req 4.1, 4.3)
+    if (newText.length > 0) {
+      onTyping?.()
+    } else {
+      // Text was cleared to empty — immediately stop typing (Req 4.3)
+      onStopTyping?.()
+    }
+  }, [onTyping, onStopTyping])
 
   const handleSendText = useCallback(() => {
     const trimmed = text.trim()
-    if (!trimmed || disabled) return
+    if (!trimmed || disabled || isDisconnected) return
+    // Emit typing_stopped before sending (Req 4.4)
+    onStopTyping?.()
     onSend({ roomId, type: 'TEXT', text: trimmed })
     setText('')
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
     }
-  }, [text, disabled, onSend, roomId])
+  }, [text, disabled, isDisconnected, onSend, onStopTyping, roomId])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -150,7 +175,7 @@ export function MessageInput({ roomId, onSend, disabled = false }: MessageInputP
   const handleImageUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0]
-      if (!file || disabled) return
+      if (!file || disabled || isDisconnected) return
 
       setUploading(true)
       try {
@@ -188,7 +213,24 @@ export function MessageInput({ roomId, onSend, disabled = false }: MessageInputP
     [onSend, roomId]
   )
 
-  const canSend = text.trim().length > 0 && !disabled
+  const canSend = text.trim().length > 0 && !disabled && !isDisconnected
+
+  // When disconnected, render a non-interactive label instead of the composition bar (Req 1.8)
+  if (isDisconnected) {
+    return (
+      <div
+        className={[
+          'flex items-center justify-center px-3 py-3',
+          'bg-white border-t border-gray-200',
+          'safe-area-inset-bottom',
+        ].join(' ')}
+        role="status"
+        aria-label="Connection unavailable"
+      >
+        <span className="text-sm text-gray-400 select-none">Connection unavailable</span>
+      </div>
+    )
+  }
 
   return (
     <>

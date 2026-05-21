@@ -6,8 +6,11 @@
  * - Fetches from `GET /chat/rooms`; falls back to `cacheStore.getChatRooms()` on error.
  * - Sorts rooms by `lastMessageTime` descending (most recent first).
  * - Displays the first "other participant" returned by the backend (buyer excluded server-side).
+ * - Initialises `uiStore.unreadChatCount` from the rooms list after a successful fetch (Req 5.1).
+ * - Falls back to cached unread sum on API failure when cache is non-empty (Req 5.6).
+ * - Leaves `unreadChatCount` unchanged when both API and cache fail / cache is empty (Req 5.7).
  *
- * Requirements: 15.1, 18.1, 18.2
+ * Requirements: 15.1, 18.1, 18.2, 5.1, 5.6, 5.7, 2.1
  */
 
 import React, { useEffect, useState, useCallback } from 'react'
@@ -20,6 +23,7 @@ import { ImageLoader } from '@/components/shared/ImageLoader'
 import { ShimmerCard } from '@/components/shared/ShimmerCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { useAuthStore } from '@/store/authStore'
+import { useUiStore } from '@/store/uiStore'
 import type { ChatListResponse, ChatRoomDto, ParticipantInfo } from '@/types/chat'
 
 // ---------------------------------------------------------------------------
@@ -184,12 +188,22 @@ function RoomRow({ room }: RoomRowProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Unread count helper
+// ---------------------------------------------------------------------------
+
+function sumUnread(rooms: ChatRoomDto[]): number {
+  return rooms.reduce((sum, r) => sum + (r.unreadCount ?? 0), 0)
+}
+
+// ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
 export function ChatRoomList() {
   const router = useRouter()
   const authStatus = useAuthStore((s) => s.status)
+  const setUnreadChat = useUiStore((s) => s.setUnreadChat)
+  const setRoomUnreadCounts = useUiStore((s) => s.setRoomUnreadCounts)
 
   const [rooms, setRooms] = useState<ChatRoomDto[]>([])
   const [loading, setLoading] = useState(true)
@@ -206,23 +220,51 @@ export function ChatRoomList() {
 
       const sorted = sortRoomsByLastMessage(roomsArray)
       setRooms(sorted)
+
+      // Build per-room unread map for messages_read WS event recomputation (Req 5.5)
+      const countsMap: Record<string, number> = {}
+      for (const r of sorted) {
+        countsMap[r.id] = r.unreadCount ?? 0
+      }
+      setRoomUnreadCounts(countsMap)
+
+      // Initialise global unread badge from the freshly loaded rooms (Req 5.1)
+      const total = sumUnread(sorted)
+      setUnreadChat(total)
+
       // Update cache for offline fallback (Req 18.1)
       await cacheStore.setChatRooms(sorted)
     } catch {
       // Offline fallback (Req 18.2)
       try {
         const cached = await cacheStore.getChatRooms()
-        setRooms(sortRoomsByLastMessage(cached))
+        const sortedCached = sortRoomsByLastMessage(cached)
+        setRooms(sortedCached)
+
+        if (cached.length > 0) {
+          // Build per-room unread map from cached rooms too (Req 5.5)
+          const countsMap: Record<string, number> = {}
+          for (const r of sortedCached) {
+            countsMap[r.id] = r.unreadCount ?? 0
+          }
+          setRoomUnreadCounts(countsMap)
+
+          // Initialise unread count from cached rooms (Req 5.6)
+          setUnreadChat(sumUnread(sortedCached))
+        }
+        // When cache is empty, leave unreadChatCount unchanged (Req 5.7)
+
         if (cached.length === 0) {
           setError('Could not load chats. Check your connection.')
         }
       } catch {
+        // Cache read also failed — leave unreadChatCount unchanged (Req 5.7)
         setError('Could not load chats. Check your connection.')
       }
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [setUnreadChat, setRoomUnreadCounts])
 
   useEffect(() => {
     if (authStatus === 'authenticated') {

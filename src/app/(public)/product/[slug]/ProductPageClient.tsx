@@ -11,8 +11,9 @@
  *  - Video player (reelStatus === 'READY')
  *  - Related Products horizontal scroll
  *  - product_click analytics event on mount
+ *  - "Message Seller" button for authenticated buyers (Req 3.3, 3.4, 3.5, 3.6, 3.7, 3.8)
  *
- * Requirements: 10.1–10.14, 25.3, 29.2–29.3, 30.1–30.5
+ * Requirements: 10.1–10.14, 25.3, 29.2–29.3, 30.1–30.5, 3.3–3.8
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react'
@@ -31,6 +32,8 @@ import {
   Play,
   Pause,
   Maximize,
+  MessageCircle,
+  Loader2,
 } from 'lucide-react'
 import type { Product, ProductVariant, MiniProduct } from '@/types/product'
 import { ImageGallery } from '@/components/product/ImageGallery'
@@ -40,6 +43,7 @@ import { ImageLoader } from '@/components/shared/ImageLoader'
 import { ShimmerCard } from '@/components/shared/ShimmerCard'
 import { api } from '@/lib/api/apiClient'
 import { useUiStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { buildStoreUrl, buildProductUrl, formatPrice } from '@/lib/utils/urlBuilders'
 import { buildImageUrl } from '@/lib/image/imageUrls'
 import { logProductClick } from '@/lib/analytics/analyticsProvider'
@@ -275,6 +279,7 @@ export function ProductPageClient({
 }: ProductPageClientProps) {
   const router = useRouter()
   const { wishlistCount, setWishlistCount, addToast } = useUiStore()
+  const authStatus = useAuthStore((s) => s.status)
 
   // -------------------------------------------------------------------------
   // Variant state
@@ -286,6 +291,7 @@ export function ProductPageClient({
   const [quantity, setQuantity] = useState(1)
   const [wishlistAdded, setWishlistAdded] = useState(false)
   const [wishlistLoading, setWishlistLoading] = useState(false)
+  const [messagingLoading, setMessagingLoading] = useState(false)
 
   // Derive the active ImageGroup from the selected variant
   const activeImageGroup =
@@ -375,6 +381,30 @@ export function ProductPageClient({
       setWishlistLoading(false)
     }
   }, [wishlistLoading, wishlistAdded, wishlistCount, setWishlistCount, addToast, productId])
+
+  /**
+   * Message Seller — calls POST /chat/create with the seller's businessId.
+   * Requirements: 3.3, 3.4, 3.5, 3.6, 3.7, 3.8
+   */
+  const handleMessageSeller = useCallback(async () => {
+    if (messagingLoading) return
+    setMessagingLoading(true)
+    try {
+      const { chatRoomId } = await api.post<{ chatRoomId: string }>('/chat/create', {
+        targetUserId: product.businessId,
+        targetUserType: 'BUSINESS',
+      })
+      router.push(`/chat/${chatRoomId}`)
+    } catch {
+      addToast({
+        id: Date.now().toString(),
+        message: 'Failed to start conversation. Please try again.',
+        type: 'error',
+      })
+    } finally {
+      setMessagingLoading(false)
+    }
+  }, [messagingLoading, product.businessId, addToast, router])
 
   // -------------------------------------------------------------------------
   // Render
@@ -537,6 +567,31 @@ export function ProductPageClient({
               <ShoppingBag size={20} aria-hidden="true" />
               {isOutOfStock ? 'Out of Stock' : 'Buy Now'}
             </button>
+
+            {/* Message Seller button — Req 3.3, 3.4, 3.5, 3.6, 3.7, 3.8 */}
+            {authStatus === 'authenticated' && (
+              <button
+                type="button"
+                onClick={handleMessageSeller}
+                disabled={messagingLoading}
+                aria-label="Message seller"
+                className={[
+                  'w-full min-h-[52px] flex items-center justify-center gap-2',
+                  'rounded-xl text-base font-semibold transition-colors',
+                  'border border-gray-300 bg-white text-gray-800',
+                  'hover:bg-gray-50 active:bg-gray-100',
+                  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-400',
+                  messagingLoading ? 'opacity-60 cursor-not-allowed' : '',
+                ].join(' ')}
+              >
+                {messagingLoading ? (
+                  <Loader2 size={20} aria-hidden="true" className="animate-spin" />
+                ) : (
+                  <MessageCircle size={20} aria-hidden="true" />
+                )}
+                Message Seller
+              </button>
+            )}
 
             {/* Shipping & policies — Req 10.8 */}
             <div className="flex flex-col gap-2 p-4 bg-gray-50 rounded-xl">

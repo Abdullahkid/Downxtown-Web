@@ -2,26 +2,29 @@
  * Cache Store — IndexedDB-backed persistence layer using `idb`.
  *
  * Database: `downxtown-cache`
- * Object stores: user-profile, feed-stores, search-history, chat-rooms, api-responses
+ * Object stores: user-profile, feed-stores, search-history, chat-rooms, api-responses,
+ *                chat-messages
  *
  * LRU eviction enforces a 50 MB total budget across all stores.
+ * Per-room message cache is additionally capped at 30 rooms (LRU).
  *
- * Requirements: 18.1, 18.2, 18.7, 8.10
+ * Requirements: 18.1, 18.2, 18.7, 8.10, 8.1, 8.6
  */
 
 import { openDB, type IDBPDatabase } from 'idb'
 import type { Personal } from '@/types/user'
 import type { FeedStore } from '@/types/feed'
-import type { ChatRoomDto } from '@/types/chat'
+import type { ChatRoomDto, ChatMessage } from '@/types/chat'
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const DB_NAME = 'downxtown-cache'
-const DB_VERSION = 1
+const DB_VERSION = 2
 const BUDGET_BYTES = 50 * 1024 * 1024 // 50 MB
 const MAX_SEARCH_HISTORY = 50
+const MAX_CACHED_ROOMS = 30
 
 // ---------------------------------------------------------------------------
 // Object-store record shapes
@@ -62,6 +65,15 @@ interface ApiResponseRecord {
   size: number
 }
 
+/** Per-room message cache record stored in the `chat-messages` object store. */
+export interface ChatMessageRecord {
+  /** Primary key — the chat room ID. */
+  roomId: string
+  messages: ChatMessage[]
+  lastAccessed: number
+  size: number
+}
+
 // ---------------------------------------------------------------------------
 // DB schema type (used by idb for type-safe access)
 // ---------------------------------------------------------------------------
@@ -87,6 +99,10 @@ interface DownxtownCacheDB {
     key: string
     value: ApiResponseRecord
   }
+  'chat-messages': {
+    key: string
+    value: ChatMessageRecord
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -109,6 +125,9 @@ export interface CacheStore {
 
   getApiResponse<T>(key: string): Promise<T | null>
   setApiResponse<T>(key: string, value: T): Promise<void>
+
+  getMessages(roomId: string): Promise<ChatMessage[]>
+  setMessages(roomId: string, messages: ChatMessage[]): Promise<void>
 
   evictLruIfNeeded(): Promise<void>
 }
@@ -135,21 +154,31 @@ class CacheStoreImpl implements CacheStore {
 
   constructor() {
     this.dbPromise = openDB<DownxtownCacheDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains('user-profile')) {
-          db.createObjectStore('user-profile', { keyPath: 'id' })
+      upgrade(db, oldVersion) {
+        // Version 1 stores — created on fresh install or upgrade from nothing
+        if (oldVersion < 1) {
+          if (!db.objectStoreNames.contains('user-profile')) {
+            db.createObjectStore('user-profile', { keyPath: 'id' })
+          }
+          if (!db.objectStoreNames.contains('feed-stores')) {
+            db.createObjectStore('feed-stores', { keyPath: 'id' })
+          }
+          if (!db.objectStoreNames.contains('search-history')) {
+            db.createObjectStore('search-history', { keyPath: 'id' })
+          }
+          if (!db.objectStoreNames.contains('chat-rooms')) {
+            db.createObjectStore('chat-rooms', { keyPath: 'id' })
+          }
+          if (!db.objectStoreNames.contains('api-responses')) {
+            db.createObjectStore('api-responses', { keyPath: 'key' })
+          }
         }
-        if (!db.objectStoreNames.contains('feed-stores')) {
-          db.createObjectStore('feed-stores', { keyPath: 'id' })
-        }
-        if (!db.objectStoreNames.contains('search-history')) {
-          db.createObjectStore('search-history', { keyPath: 'id' })
-        }
-        if (!db.objectStoreNames.contains('chat-rooms')) {
-          db.createObjectStore('chat-rooms', { keyPath: 'id' })
-        }
-        if (!db.objectStoreNames.contains('api-responses')) {
-          db.createObjectStore('api-responses', { keyPath: 'key' })
+
+        // Version 2 — per-room message cache (Requirements: 8.1)
+        if (oldVersion < 2) {
+          if (!db.objectStoreNames.contains('chat-messages')) {
+            db.createObjectStore('chat-messages', { keyPath: 'roomId' })
+          }
         }
       },
     })
@@ -302,6 +331,44 @@ class CacheStoreImpl implements CacheStore {
   }
 
   // -------------------------------------------------------------------------
+  // Per-Room Message Cache (Requirements: 8.1, 8.6)
+  // -------------------------------------------------------------------------
+
+  async getMessages(roomId: string): Promise<ChatMessage[]> {
+    const db = await this.db()
+    const record = await db.get('chat-messages', roomId)
+    if (!record) return []
+
+    // Touch lastAccessed so this room doesn't get evicted prematurely
+    await db.put('chat-messages', { ...record, lastAccessed: Date.now() })
+    return record.messages
+  }
+
+  async setMessages(roomId: string, messages: ChatMessage[]): Promise<void> {
+    const db = await this.db()
+    const size = estimateSize(messages)
+    const record: ChatMessageRecord = {
+      roomId,
+      messages,
+      lastAccessed: Date.now(),
+      size,
+    }
+    await db.put('chat-messages', record)
+
+    // LRU eviction: keep at most MAX_CACHED_ROOMS (30) distinct rooms (Req 8.6)
+    const allRecords = await db.getAll('chat-messages')
+    if (allRecords.length > MAX_CACHED_ROOMS) {
+      // Sort ascending by lastAccessed — oldest first
+      allRecords.sort((a, b) => a.lastAccessed - b.lastAccessed)
+      // Evict until we are back at the cap
+      const toEvict = allRecords.slice(0, allRecords.length - MAX_CACHED_ROOMS)
+      for (const staleRecord of toEvict) {
+        await db.delete('chat-messages', staleRecord.roomId)
+      }
+    }
+  }
+
+  // -------------------------------------------------------------------------
   // LRU Eviction
   // -------------------------------------------------------------------------
 
@@ -352,6 +419,12 @@ class CacheStoreImpl implements CacheStore {
     const apiRecords = await db.getAll('api-responses')
     for (const r of apiRecords) {
       entries.push({ store: 'api-responses', key: r.key, size: r.size, lastAccessed: r.lastAccessed })
+    }
+
+    // chat-messages
+    const chatMessageRecords = await db.getAll('chat-messages')
+    for (const r of chatMessageRecords) {
+      entries.push({ store: 'chat-messages', key: r.roomId, size: r.size, lastAccessed: r.lastAccessed })
     }
 
     // Calculate total size

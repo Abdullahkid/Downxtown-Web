@@ -90,6 +90,15 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
   const config = VARIANT_CONFIG[toast.type]
   const Icon = config.icon
 
+  const isClickable = typeof toast.onClick === 'function'
+
+  function handleBodyClick() {
+    if (toast.onClick) {
+      toast.onClick()
+      handleDismiss()
+    }
+  }
+
   return (
     <div
       role="alert"
@@ -105,7 +114,10 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
         visible
           ? 'translate-y-0 opacity-100 scale-100'
           : 'translate-y-2 opacity-0 scale-95',
+        // Clickable affordance
+        isClickable ? 'cursor-pointer' : '',
       ].join(' ')}
+      onClick={isClickable ? handleBodyClick : undefined}
     >
       {/* Variant icon */}
       <Icon
@@ -117,10 +129,10 @@ function ToastItem({ toast, onDismiss }: ToastItemProps) {
       {/* Message */}
       <p className="flex-1 text-sm font-medium leading-snug">{toast.message}</p>
 
-      {/* Manual dismiss button */}
+      {/* Manual dismiss button — stopPropagation so it doesn't also fire onClick */}
       <button
         type="button"
-        onClick={handleDismiss}
+        onClick={(e) => { e.stopPropagation(); handleDismiss() }}
         aria-label="Dismiss notification"
         className="flex-shrink-0 p-1 rounded-md opacity-60 hover:opacity-100 transition-opacity focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-current"
       >

@@ -15,6 +15,7 @@
 import type { Metadata } from 'next'
 import { AppBar, BottomNav, SideRail, PageShell } from '@/components/layout'
 import { ToastContainer } from '@/components/shared'
+import { WsProvider } from '@/lib/chat/wsContext'
 
 // All pages under (app) are auth-gated and use browser APIs (IndexedDB via idb,
 // WebSocket, Firebase). Never statically prerender them — always SSR on-demand.
@@ -39,24 +40,26 @@ export default function AppLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="min-h-screen bg-background text-text-1">
-      {/* Top app bar — fixed, z-50, full width */}
-      <AppBar />
+    <WsProvider>
+      <div className="min-h-screen bg-background text-text-1">
+        {/* Top app bar — fixed, z-50, full width */}
+        <AppBar />
 
-      {/* Side rail — fixed left sidebar, hidden on mobile (lg:flex) */}
-      <SideRail />
+        {/* Side rail — fixed left sidebar, hidden on mobile (lg:flex) */}
+        <SideRail />
 
-      {/* Main content area — offset left to clear SideRail on desktop */}
-      {/* lg:pl-16 = 64px (icon-only rail), xl:pl-56 = 224px (rail with labels) */}
-      <div className="lg:pl-16 xl:pl-56">
-        <PageShell>{children}</PageShell>
+        {/* Main content area — offset left to clear SideRail on desktop */}
+        {/* lg:pl-16 = 64px (icon-only rail), xl:pl-56 = 224px (rail with labels) */}
+        <div className="lg:pl-16 xl:pl-56">
+          <PageShell>{children}</PageShell>
+        </div>
+
+        {/* Bottom nav — fixed, mobile only (lg:hidden) */}
+        <BottomNav />
+
+        {/* Toast notifications — fixed, rendered above all content */}
+        <ToastContainer />
       </div>
-
-      {/* Bottom nav — fixed, mobile only (lg:hidden) */}
-      <BottomNav />
-
-      {/* Toast notifications — fixed, rendered above all content */}
-      <ToastContainer />
-    </div>
+    </WsProvider>
   )
 }
