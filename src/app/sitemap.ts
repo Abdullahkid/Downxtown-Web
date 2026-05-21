@@ -42,26 +42,46 @@ interface SitemapCollectionsResponse {
   collections: SitemapCollectionEntry[]
 }
 
+/**
+ * Fetch with a timeout so a slow/unavailable backend endpoint doesn't
+ * hang the sitemap build for 60s. Returns null on timeout or error.
+ */
+async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response | null> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, {
+      next: { revalidate },
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+    return res
+  } catch {
+    clearTimeout(timer)
+    return null
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [storesRes, productsRes, collectionsRes] = await Promise.allSettled([
-    fetch(`${API_BASE}/sitemap/stores`, { next: { revalidate } }),
-    fetch(`${API_BASE}/sitemap/products`, { next: { revalidate } }),
-    fetch(`${API_BASE}/sitemap/store-collections`, { next: { revalidate } }),
+  const [storesRes, productsRes, collectionsRes] = await Promise.all([
+    fetchWithTimeout(`${API_BASE}/sitemap/stores`),
+    fetchWithTimeout(`${API_BASE}/sitemap/products`),
+    fetchWithTimeout(`${API_BASE}/sitemap/store-collections`),
   ])
 
   const storeUsernames: string[] =
-    storesRes.status === 'fulfilled' && storesRes.value.ok
-      ? ((await storesRes.value.json()) as SitemapStoresResponse).usernames ?? []
+    storesRes?.ok
+      ? ((await storesRes.json()) as SitemapStoresResponse).usernames ?? []
       : []
 
   const sitemapProducts: SitemapProductEntry[] =
-    productsRes.status === 'fulfilled' && productsRes.value.ok
-      ? ((await productsRes.value.json()) as SitemapProductsResponse).products ?? []
+    productsRes?.ok
+      ? ((await productsRes.json()) as SitemapProductsResponse).products ?? []
       : []
 
   const sitemapCollections: SitemapCollectionEntry[] =
-    collectionsRes.status === 'fulfilled' && collectionsRes.value.ok
-      ? ((await collectionsRes.value.json()) as SitemapCollectionsResponse).collections ?? []
+    collectionsRes?.ok
+      ? ((await collectionsRes.json()) as SitemapCollectionsResponse).collections ?? []
       : []
 
   const now = new Date()

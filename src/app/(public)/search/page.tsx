@@ -15,7 +15,15 @@
  */
 
 import type { Metadata } from 'next'
-import { SearchPageClient } from './SearchPageClient'
+import dynamic from 'next/dynamic'
+
+// SearchPageClient uses IndexedDB (cacheStore) and browser APIs.
+// ssr: false prevents the server from attempting to evaluate it at build time,
+// which would throw "indexedDB is not defined" during static page generation.
+const SearchPageClient = dynamic(
+  () => import('./SearchPageClient').then((mod) => ({ default: mod.SearchPageClient })),
+  { ssr: false },
+)
 
 // ---------------------------------------------------------------------------
 // Metadata — dynamic based on whether a query param is present
