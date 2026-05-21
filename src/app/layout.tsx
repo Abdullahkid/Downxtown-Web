@@ -237,7 +237,7 @@ export default function RootLayout({
         {/* Google Analytics 4 — loads after page is interactive (afterInteractive)
             so it never blocks rendering or Core Web Vitals scores. */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-P479RX9Y8J"
+          src="https://www.googletagmanager.com/gtag/js?id=G-BWTTKBF253"
           strategy="afterInteractive"
         />
         <Script id="google-analytics" strategy="afterInteractive">
@@ -245,7 +245,7 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-P479RX9Y8J');
+            gtag('config', 'G-BWTTKBF253');
           `}
         </Script>
         {/*
