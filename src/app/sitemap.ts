@@ -74,10 +74,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ? ((await storesRes.json()) as SitemapStoresResponse).usernames ?? []
       : []
 
-  const sitemapProducts: SitemapProductEntry[] =
-    productsRes?.ok
-      ? ((await productsRes.json()) as SitemapProductsResponse).products ?? []
-      : []
+  const rawProductsJson: unknown = productsRes?.ok ? await productsRes.json() : null
+
+  // Backward compat: handle both old format { ids: string[] } and new format { products: [{id, slug}] }
+  let sitemapProducts: SitemapProductEntry[] = []
+  if (rawProductsJson && typeof rawProductsJson === 'object') {
+    const json = rawProductsJson as Record<string, unknown>
+    if (Array.isArray(json.products)) {
+      // New format — slug URLs
+      sitemapProducts = json.products as SitemapProductEntry[]
+    } else if (Array.isArray(json.ids)) {
+      // Old format — bare-ID URLs (sigma-ktor not yet deployed with new endpoint)
+      // Use bare ID as slug so the URL is /product/{id} (no double-id issue)
+      sitemapProducts = (json.ids as string[]).map((id) => ({ id, slug: '' }))
+    }
+  }
 
   const sitemapCollections: SitemapCollectionEntry[] =
     collectionsRes?.ok
@@ -148,11 +159,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.9,
   }))
 
-  // Product pages — SEO-friendly slug URLs: /product/{slug}-{id}
-  // slug comes from shopifyHandle (Shopify products) or is title-derived (direct uploads).
-  // The ObjectId is always the last 24 chars, which is how the page component resolves the product.
+  // Product pages — slug format when available, bare-ID fallback
   const productEntries: MetadataRoute.Sitemap = sitemapProducts.map(({ id, slug }) => ({
-    url: `${SITE_URL}/product/${slug}-${id}`,
+    url: slug ? `${SITE_URL}/product/${slug}-${id}` : `${SITE_URL}/product/${id}`,
     lastModified: now,
     changeFrequency: 'daily' as const,
     priority: 0.7,
