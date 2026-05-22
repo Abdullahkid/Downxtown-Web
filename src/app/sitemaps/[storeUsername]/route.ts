@@ -42,6 +42,11 @@ export async function GET(
     return `  <url>\n    <loc>${url}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>`
   })
 
+  // Return 404 for empty sitemaps — Google logs an error for empty <urlset>.
+  if (entries.length === 0) {
+    return new Response('No products available yet', { status: 404 })
+  }
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${entries.join('\n')}

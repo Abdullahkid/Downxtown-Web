@@ -21,6 +21,12 @@ export async function GET() {
 ${entries.join('\n')}
 </urlset>`
 
+  // Return 404 for empty sitemaps — Google logs an error for empty <urlset>.
+  // A 404 is cleaner: Google skips it silently and retries later.
+  if (entries.length === 0) {
+    return new Response('No collections available yet', { status: 404 })
+  }
+
   return new Response(xml, {
     headers: {
       'Content-Type': 'application/xml',
