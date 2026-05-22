@@ -228,6 +228,9 @@ export async function generateMetadata({
       canonical: canonicalUrl,
     },
     // Req 21.6 — Open Graph
+    // Next.js Metadata API doesn't support og:type "product" directly.
+    // Product pricing surfaces via og:price:amount / og:price:currency in the
+    // `other` field below — Facebook and WhatsApp both read these for rich previews.
     openGraph: {
       type: 'website',
       url: canonicalUrl,
@@ -251,6 +254,19 @@ export async function generateMetadata({
       title: product.name,
       description,
       images: ogImageUrl ? [ogImageUrl] : undefined,
+    },
+    // Product-specific Open Graph tags — Facebook and WhatsApp use these to
+    // display price and availability directly in link preview cards.
+    other: {
+      'og:type': 'product',
+      ...(defaultVariant
+        ? {
+            'product:price:amount': defaultVariant.sellingPrice.toFixed(2),
+            'product:price:currency': 'INR',
+            'product:availability': defaultVariant.status === 'AVAILABLE' ? 'in stock' : 'out of stock',
+          }
+        : {}),
+      ...(product.brandName ? { 'product:brand': product.brandName } : {}),
     },
   }
 }
