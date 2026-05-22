@@ -12,11 +12,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Script from 'next/script'
-import Link from 'next/link'
-import { Star } from 'lucide-react'
 import { buildStoreMetadata } from '@/lib/utils/metadata'
 import { buildProductUrl, formatPrice } from '@/lib/utils/urlBuilders'
-import { ImageLoader } from '@/lib/image/imageLoader'
 import type { StoreProfile } from '@/types/store'
 import type { MiniProduct } from '@/types/product'
 import {
@@ -333,15 +330,10 @@ export default async function StorePage({ params }: PageProps) {
     notFound()
   }
 
-  // Fetch page 1 of products server-side in parallel with profile.
-  // These render as actual HTML <a> links that Googlebot reads directly —
-  // making the store page rank for "Bonkers Corner" branded queries by having
-  // real product content rather than a thin profile page.
-  const { products: ssrProducts } = await fetchStoreProducts(store.id)
+  const { products: ssrProducts, hasNextPage: ssrHasNextPage } = await fetchStoreProducts(store.id)
 
   return (
     <>
-      {/* Schema.org LocalBusiness + ItemList structured data */}
       <Script
         id="store-jsonld"
         type="application/ld+json"
@@ -351,85 +343,18 @@ export default async function StorePage({ params }: PageProps) {
       <main className="min-h-screen bg-white">
         <StoreHeader store={store} />
 
-        {/* ---------------------------------------------------------------- */}
-        {/* SSR product grid — Googlebot reads this section directly.        */}
-        {/* These 12 products appear in the HTML before any JS runs, making  */}
-        {/* the store page crawlable and rankable for branded product queries.*/}
-        {/* StoreTabs below provides the interactive browsing experience.    */}
-        {/* ---------------------------------------------------------------- */}
-        {ssrProducts.length > 0 && (
-          <section
-            aria-label={`${store.storeName} products`}
-            className="px-4 pt-4 pb-2"
-          >
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
-              {ssrProducts.map((product) => {
-                const discount =
-                  product.mrp > product.sellingPrice
-                    ? Math.round(((product.mrp - product.sellingPrice) / product.mrp) * 100)
-                    : 0
-                return (
-                  <Link
-                    key={product.id}
-                    href={buildProductUrl(product.id)}
-                    className={[
-                      'group flex flex-col overflow-hidden rounded-xl border border-gray-100 bg-white',
-                      'shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-150',
-                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
-                      'focus-visible:outline-[var(--brand-color,#6366f1)]',
-                    ].join(' ')}
-                    aria-label={`${product.name}, ${formatPrice(product.sellingPrice)}`}
-                  >
-                    <div className="relative aspect-square w-full overflow-hidden bg-gray-50">
-                      <ImageLoader
-                        imageId={product.mainImageUrl}
-                        endpoint="detail"
-                        alt={product.name}
-                        fill
-                        imageContext="product"
-                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                        className="transition-transform duration-200 group-hover:scale-105"
-                      />
-                      {discount > 0 && (
-                        <span className="absolute left-2 top-2 rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                          {discount}% off
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-col gap-0.5 p-2.5">
-                      <p className="line-clamp-2 text-xs font-medium text-gray-800 leading-snug">
-                        {product.name}
-                      </p>
-                      <div className="flex items-baseline gap-1.5 mt-1">
-                        <span className="text-sm font-bold text-gray-900">
-                          {formatPrice(product.sellingPrice)}
-                        </span>
-                        {product.mrp > product.sellingPrice && (
-                          <span className="text-xs text-gray-400 line-through">
-                            {formatPrice(product.mrp)}
-                          </span>
-                        )}
-                      </div>
-                      {product.averageRating > 0 && (
-                        <div className="flex items-center gap-0.5 mt-0.5">
-                          <Star size={10} className="fill-amber-400 text-amber-400" aria-hidden="true" />
-                          <span className="text-[10px] text-gray-500">
-                            {product.averageRating.toFixed(1)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Interactive tabs — products (from page 2), categories, reviews */}
+        {/*
+         * StoreTabs receives the SSR page 1 products and passes them into
+         * StoreProductGrid, which renders them first then continues from
+         * page 2 with infinite scroll. Users see one unified product grid —
+         * no duplicate. Googlebot still sees the products in the HTML
+         * because StoreHeader + StoreTabs are both server-rendered.
+         */}
         <StoreTabs
           storeId={store.id}
           storeUsername={store.storeUsername}
+          ssrProducts={ssrProducts}
+          ssrHasNextPage={ssrHasNextPage}
         />
       </main>
     </>

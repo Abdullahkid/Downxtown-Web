@@ -13,16 +13,16 @@ import React, { useState } from 'react'
 import { StoreProductGrid } from './StoreProductGrid'
 import { StoreCategories } from './StoreCategories'
 import { StoreReviews } from './StoreReviews'
-
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+import type { MiniProduct } from '@/types/product'
 
 type Tab = 'products' | 'categories' | 'reviews'
 
 interface StoreTabsProps {
   storeId: string
   storeUsername: string
+  /** SSR page 1 products from the server component — passed into StoreProductGrid */
+  ssrProducts?: MiniProduct[]
+  ssrHasNextPage?: boolean
 }
 
 const TABS: { id: Tab; label: string }[] = [
@@ -35,7 +35,7 @@ const TABS: { id: Tab; label: string }[] = [
 // Component
 // ---------------------------------------------------------------------------
 
-export function StoreTabs({ storeId, storeUsername }: StoreTabsProps) {
+export function StoreTabs({ storeId, storeUsername, ssrProducts = [], ssrHasNextPage = true }: StoreTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>('products')
 
   return (
@@ -79,7 +79,12 @@ export function StoreTabs({ storeId, storeUsername }: StoreTabsProps) {
         tabIndex={0}
       >
         {activeTab === 'products' && (
-          <StoreProductGrid storeId={storeId} storeUsername={storeUsername} />
+          <StoreProductGrid
+            storeId={storeId}
+            storeUsername={storeUsername}
+            ssrProducts={ssrProducts}
+            ssrHasNextPage={ssrHasNextPage}
+          />
         )}
         {activeTab === 'categories' && (
           <StoreCategories storeId={storeId} storeUsername={storeUsername} />
