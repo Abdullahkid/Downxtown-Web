@@ -8,29 +8,6 @@ const nextConfig: NextConfig = {
   },
 
   /**
-   * Redirect www → non-www (permanent 301).
-   *
-   * Without this, https://www.downxtown.com/... and https://downxtown.com/...
-   * both resolve to the same content, creating duplicate URL entries in Google
-   * Search Console ("Duplicate without user-selected canonical").
-   * A permanent redirect consolidates all link equity and signals to Google
-   * that downxtown.com (no-www) is the canonical domain.
-   *
-   * Must be in redirects() rather than headers() so Next.js returns the
-   * 301 before rendering any page content.
-   */
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.downxtown.com' }],
-        destination: 'https://downxtown.com/:path*',
-        permanent: true, // 301 — tells Google to update its index
-      },
-    ]
-  },
-
-  /**
    * Rewrite /api-proxy/* → https://api.downxtown.com/* during local dev.
    *
    * This proxy runs on the Next.js Node.js server, so the request to the
