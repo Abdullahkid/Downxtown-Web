@@ -58,6 +58,8 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
     }
     router.push(buildProductUrl(product.id, product.shopifyHandle))
   }, [router, product.id, product.shopifyHandle])
+
+  const dismissOverlay = useCallback(() => {
     setOverlayVisible(false)
   }, [])
 
