@@ -9,6 +9,7 @@ import React, { useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { ImageLoader } from '@/components/shared'
+import { buildProductUrl } from '@/lib/utils/urlBuilders'
 import type { MiniProduct } from '@/types/product'
 
 interface MiniProductCardProps {
@@ -55,10 +56,8 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
       didLongPress.current = false
       return
     }
-    router.push(`/product/${product.id}`)
-  }, [router, product.id])
-
-  const dismissOverlay = useCallback(() => {
+    router.push(buildProductUrl(product.id, product.shopifyHandle))
+  }, [router, product.id, product.shopifyHandle])
     setOverlayVisible(false)
   }, [])
 

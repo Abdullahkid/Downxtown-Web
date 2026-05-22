@@ -214,7 +214,7 @@ function MiniProductCard({ product }: { product: MiniProduct }) {
 
   return (
     <Link
-      href={buildProductUrl(product.id)}
+      href={buildProductUrl(product.id, product.shopifyHandle)}
       className={[
         'flex-none w-40 flex flex-col gap-1.5 rounded-xl overflow-hidden',
         'border border-gray-100 bg-white hover:shadow-md transition-shadow',

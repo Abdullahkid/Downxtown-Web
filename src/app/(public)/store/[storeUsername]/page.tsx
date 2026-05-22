@@ -149,6 +149,7 @@ async function fetchStoreProducts(
           businessId?: string
           mainCategory?: string
           shopifyHandle?: string | null
+          shopifyHandle?: string | null
         }>
         hasNextPage: boolean
       } | null
@@ -167,6 +168,7 @@ async function fetchStoreProducts(
       mainCategory: p.mainCategory ?? '',
       storeName: '',
       storeUsername: p.storeUsername ?? '',
+      shopifyHandle: p.shopifyHandle ?? null,
     }))
 
     return { products, hasNextPage: body.data.hasNextPage }
@@ -375,7 +377,7 @@ function buildJsonLd(store: StoreProfile, products: MiniProduct[]): string {
               itemListElement: products.slice(0, 12).map((product, idx) => ({
                 '@type': 'ListItem',
                 position: idx + 1,
-                url: `${siteUrl}${buildProductUrl(product.id)}`,
+                url: `${siteUrl}${buildProductUrl(product.id, product.shopifyHandle)}`,
                 name: product.name,
               })),
             },

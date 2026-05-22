@@ -44,6 +44,8 @@ export interface MiniProduct {
   mainCategory: string
   storeName: string
   storeUsername: string
+  /** Shopify product handle — used to build canonical slug URLs /product/{handle}-{id} */
+  shopifyHandle?: string | null
 }
 
 export interface Product {

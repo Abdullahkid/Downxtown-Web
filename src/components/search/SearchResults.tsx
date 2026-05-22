@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/shared/EmptyState'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { api } from '@/lib/api/apiClient'
 import type { MiniProduct } from '@/types/product'
+import { buildProductUrl } from '@/lib/utils/urlBuilders'
 
 // ---------------------------------------------------------------------------
 // Types — mirror the Ktor backend DTOs exactly
@@ -317,7 +318,7 @@ function ProductCard({ product, index }: { product: MiniProduct; index: number }
 
   return (
     <Link
-      href={`/product/${product.id}`}
+      href={buildProductUrl(product.id, product.shopifyHandle)}
       className="group block"
       aria-label={product.name}
       style={{ animationDelay: `${(index % 10) * 40}ms` }}

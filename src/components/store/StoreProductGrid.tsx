@@ -19,7 +19,7 @@ import { ImageLoader } from '@/lib/image/imageLoader'
 import { ShimmerCard } from '@/components/shared/ShimmerCard'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ErrorState } from '@/components/shared/ErrorState'
-import { formatPrice } from '@/lib/utils/urlBuilders'
+import { formatPrice, buildProductUrl } from '@/lib/utils/urlBuilders'
 import { api } from '@/lib/api/apiClient'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
 import type { MiniProduct } from '@/types/product'
@@ -70,7 +70,7 @@ function ProductCard({ product }: { product: MiniProduct }) {
   return (
     <button
       type="button"
-      onClick={() => router.push(`/product/${product.id}`)}
+      onClick={() => router.push(buildProductUrl(product.id, product.shopifyHandle))}
       className={[
         'group flex h-full w-full flex-col overflow-hidden rounded-xl border border-gray-100 bg-white',
         'text-left shadow-sm hover:shadow-md active:scale-[0.98]',
