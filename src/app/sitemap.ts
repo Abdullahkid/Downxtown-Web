@@ -46,7 +46,7 @@ interface SitemapCollectionsResponse {
  * Fetch with a timeout so a slow/unavailable backend endpoint doesn't
  * hang the sitemap build for 60s. Returns null on timeout or error.
  */
-async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<Response | null> {
+async function fetchWithTimeout(url: string, timeoutMs = 25000): Promise<Response | null> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
