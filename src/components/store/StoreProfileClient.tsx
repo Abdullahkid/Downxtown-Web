@@ -207,6 +207,7 @@ export function StoreProfileClient({
           <StoreTabs
             storeId={store.id}
             storeUsername={store.storeUsername}
+            store={store}
             ssrProducts={ssrProducts}
             ssrHasNextPage={ssrHasNextPage}
           />
