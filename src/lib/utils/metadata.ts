@@ -29,6 +29,8 @@ export interface StoreMetadataInput {
   bannerImageId?: string
   averageRating?: number
   city?: string
+  /** AI-generated brand keywords — used in title and keywords meta */
+  searchKeywords?: string[]
 }
 
 /**
@@ -49,10 +51,18 @@ export function buildStoreMetadata(input: StoreMetadataInput): Metadata {
     bannerImageId,
     averageRating,
     city,
+    searchKeywords,
   } = input
 
   const pageUrl = `${SITE_URL}/store/${storeUsername}`
-  const title = `${storeName} (@${storeUsername}) — ${SITE_NAME}`
+
+  // Title: "{StoreName} — Indian {TopKeyword} Brand | Downxtown"
+  // or fallback: "{StoreName} (@{username}) — Downxtown"
+  const topKeyword = searchKeywords?.[0]
+  const title = topKeyword
+    ? `${storeName} — Indian ${topKeyword} Brand`
+    : `${storeName} (@${storeUsername})`
+
   const metaDescription =
     description ??
     (city

@@ -19,6 +19,7 @@ export interface StoreProfile {
   bannerImageId?: string
   description?: string
   city?: string
+  state?: string
   phoneNumber?: string
   whatsappNumber?: string
   /** Store's own website URL — used in sameAs for SEO entity linking */
@@ -32,6 +33,10 @@ export interface StoreProfile {
   isFollowing: boolean
   followerCount: number
   productCount: number
+  // Brand SEO fields — populated from backend brand/business data
+  ownerName?: string
+  searchKeywords?: string[]
+  trademarkStatus?: string
 }
 
 // ---------------------------------------------------------------------------

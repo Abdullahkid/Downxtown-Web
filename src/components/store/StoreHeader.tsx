@@ -42,6 +42,8 @@ import type { StoreProfile } from '@/types/store'
 
 interface StoreHeaderProps {
   store: StoreProfile
+  /** Called when the user taps the search icon on the banner. */
+  onSearchClick?: () => void
 }
 
 // ---------------------------------------------------------------------------
@@ -83,7 +85,7 @@ function StarRating({ rating }: { rating: number }) {
 // Component
 // ---------------------------------------------------------------------------
 
-export function StoreHeader({ store }: StoreHeaderProps) {
+export function StoreHeader({ store, onSearchClick }: StoreHeaderProps) {
   const router = useRouter()
   const bannerRef = useRef<HTMLDivElement>(null)
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -353,6 +355,7 @@ export function StoreHeader({ store }: StoreHeaderProps) {
         <div className="absolute right-4 top-4 z-10">
           <button
             type="button"
+            onClick={onSearchClick}
             aria-label="Search store products"
             className={[
               'flex items-center justify-center rounded-full',

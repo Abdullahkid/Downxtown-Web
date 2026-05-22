@@ -16,10 +16,7 @@ import { buildStoreMetadata } from '@/lib/utils/metadata'
 import { buildProductUrl, formatPrice } from '@/lib/utils/urlBuilders'
 import type { StoreProfile } from '@/types/store'
 import type { MiniProduct } from '@/types/product'
-import {
-  StoreHeader,
-  StoreTabs,
-} from '@/components/store'
+import { StoreProfileClient } from '@/components/store/StoreProfileClient'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -67,20 +64,26 @@ async function fetchStoreProfile(
         whatsappNumber?: string
         isFollowing?: boolean
         websiteUrl?: string
+        city?: string
+        state?: string
+        // Brand SEO fields (new — nullable, backward compatible)
+        ownerName?: string
+        searchKeywords?: string[]
+        trademarkStatus?: string
+        instagramUrl?: string
+        facebookUrl?: string
         socialLinks?: {
           instagram?: string
           facebook?: string
           twitter?: string
           youtube?: string
         }
-        city?: string
       }
     }
 
     if (!body.success || !body.storeProfile) return null
     const s = body.storeProfile
 
-    // Map to the StoreProfile type used by StoreHeader/StoreTabs
     const profile: StoreProfile = {
       id: s.id,
       storeName: s.storeName,
@@ -96,9 +99,14 @@ async function fetchStoreProfile(
       phoneNumber: s.phoneNumber,
       whatsappNumber: s.whatsappNumber,
       websiteUrl: s.websiteUrl,
-      instagramUrl: s.socialLinks?.instagram,
-      facebookUrl: s.socialLinks?.facebook,
+      instagramUrl: s.instagramUrl ?? s.socialLinks?.instagram,
+      facebookUrl: s.facebookUrl ?? s.socialLinks?.facebook,
       city: s.city,
+      state: s.state,
+      // Brand SEO fields
+      ownerName: s.ownerName,
+      searchKeywords: s.searchKeywords,
+      trademarkStatus: s.trademarkStatus,
     }
     return profile
   } catch {
@@ -182,14 +190,23 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     }
   }
 
+  // Build a keyword-rich description using searchKeywords if available
+  // e.g. "Sassafras — Indian Women's Fashion Brand | Dresses, Co-ord Sets, Fusion Wear on Downxtown"
+  const topKeywords = store.searchKeywords?.slice(0, 4).join(', ')
+  const locationStr = store.city ? `Based in ${store.city}` : ''
+  const keywordDescription = topKeywords
+    ? `${store.storeName} on Downxtown — Shop ${topKeywords}${locationStr ? `. ${locationStr}` : ''}.`
+    : undefined
+
   return buildStoreMetadata({
     storeName: store.storeName,
     storeUsername: store.storeUsername,
-    description: store.description,
+    description: keywordDescription ?? store.description,
     logoImageId: store.logoImageId,
     bannerImageId: store.bannerImageId,
     averageRating: store.averageRating,
     city: store.city,
+    searchKeywords: store.searchKeywords,
   })
 }
 
@@ -219,12 +236,6 @@ function buildJsonLd(store: StoreProfile, products: MiniProduct[]): string {
     ? `${apiBase}/get-display-image/${store.logoImageId}`
     : undefined
 
-  // Build sameAs array — links this entity to other known identifiers.
-  // Google uses sameAs to connect the entity across the web.
-  // Including Instagram is critical: when Google sees the same brand name
-  // on both Instagram and Downxtown linked via sameAs, it treats them as
-  // the same entity — which is how Downxtown store pages surface alongside
-  // the brand's Instagram in search results.
   const sameAs: string[] = []
   if (store.instagramUrl) sameAs.push(store.instagramUrl)
   if (store.facebookUrl) sameAs.push(store.facebookUrl)
@@ -233,13 +244,15 @@ function buildJsonLd(store: StoreProfile, products: MiniProduct[]): string {
     sameAs.push(`https://wa.me/${store.whatsappNumber.replace(/\D/g, '')}`)
   }
 
-  // LocalBusiness entity — the store itself
+  // Extract founding year from storeDescription if present ("Launched in 2015...")
+  const foundingYearMatch = store.description?.match(/(?:launched|founded|established|started)\s+in\s+(\d{4})/i)
+  const foundingDate = foundingYearMatch?.[1]
+
   const localBusiness: Record<string, unknown> = {
-    '@type': 'LocalBusiness',
+    '@type': 'Organization',   // Organization is more appropriate than LocalBusiness for D2C brands
     '@id': `${storeUrl}#business`,
     name: store.storeName,
     url: storeUrl,
-    // Link back to the platform that hosts this store
     parentOrganization: { '@id': 'https://downxtown.com/#organization' },
     ...(logoUrl ? { logo: logoUrl, image: logoUrl } : {}),
     ...(store.description ? { description: store.description } : {}),
@@ -248,13 +261,31 @@ function buildJsonLd(store: StoreProfile, products: MiniProduct[]): string {
           address: {
             '@type': 'PostalAddress',
             addressLocality: store.city,
-            addressCountry: 'IN',   // geo-targeting signal for India local search
+            ...(store.state ? { addressRegion: store.state } : {}),
+            addressCountry: 'IN',
+          },
+          location: {
+            '@type': 'Place',
+            name: [store.city, store.state].filter(Boolean).join(', '),
           },
         }
       : {}),
-    // India-specific signals — helps Google surface this in local/regional queries
     areaServed: 'IN',
-    currenciesAccepted: 'INR',
+    // knowsAbout maps brand keywords to topical expertise — helps Google
+    // understand what this brand is authoritative about
+    ...(store.searchKeywords?.length
+      ? { knowsAbout: store.searchKeywords.slice(0, 10) }
+      : {}),
+    // founder signals this is a real entity with a human behind it
+    ...(store.ownerName
+      ? {
+          founder: {
+            '@type': 'Person',
+            name: store.ownerName,
+          },
+        }
+      : {}),
+    ...(foundingDate ? { foundingDate } : {}),
     ...(store.phoneNumber ? { telephone: store.phoneNumber } : {}),
     ...(sameAs.length > 0 ? { sameAs } : {}),
     ...(store.averageRating > 0 && store.totalReviews > 0
@@ -270,14 +301,11 @@ function buildJsonLd(store: StoreProfile, products: MiniProduct[]): string {
       : {}),
   }
 
-  // ProfilePage entity — the web page that represents the store's profile.
-  // This is the key schema that triggers the Instagram-style card in Google.
   const profilePage: Record<string, unknown> = {
     '@type': 'ProfilePage',
     '@id': `${storeUrl}#profile`,
     url: storeUrl,
     name: `${store.storeName} (@${store.storeUsername})`,
-    // mainEntity links the ProfilePage to the LocalBusiness it describes
     mainEntity: { '@id': `${storeUrl}#business` },
     ...(logoUrl
       ? {
@@ -290,14 +318,53 @@ function buildJsonLd(store: StoreProfile, products: MiniProduct[]): string {
       : {}),
   }
 
+  // FAQ schema — auto-generated from available data
+  // Targets "what is X brand", "where is X from", "who founded X" queries
+  const faqItems: Array<{ question: string; answer: string }> = []
+
+  if (store.description) {
+    faqItems.push({
+      question: `What is ${store.storeName}?`,
+      answer: store.description.slice(0, 300),
+    })
+  }
+  if (store.city) {
+    faqItems.push({
+      question: `Where is ${store.storeName} from?`,
+      answer: `${store.storeName} is an Indian brand${store.city ? ` based in ${store.city}${store.state ? `, ${store.state}` : ''}` : ''}.`,
+    })
+  }
+  if (store.ownerName) {
+    faqItems.push({
+      question: `Who founded ${store.storeName}?`,
+      answer: `${store.storeName} was founded by ${store.ownerName}.`,
+    })
+  }
+  if (store.searchKeywords?.length) {
+    const keywordStr = store.searchKeywords.slice(0, 5).join(', ')
+    faqItems.push({
+      question: `What does ${store.storeName} sell?`,
+      answer: `${store.storeName} sells ${keywordStr} and more. Shop their full collection on Downxtown.`,
+    })
+  }
+
+  const faqSchema = faqItems.length > 0
+    ? [{
+        '@type': 'FAQPage',
+        mainEntity: faqItems.map(({ question, answer }) => ({
+          '@type': 'Question',
+          name: question,
+          acceptedAnswer: { '@type': 'Answer', text: answer },
+        })),
+      }]
+    : []
+
   return JSON.stringify({
     '@context': 'https://schema.org',
     '@graph': [
       profilePage,
       localBusiness,
-      // ItemList links this store page to the products it carries.
-      // Google uses these links to surface product URLs under the store
-      // in branded searches ("Bonkers Corner products", etc.)
+      ...faqSchema,
       ...(products.length > 0
         ? [
             {
@@ -341,18 +408,8 @@ export default async function StorePage({ params }: PageProps) {
       />
 
       <main className="min-h-screen bg-white">
-        <StoreHeader store={store} />
-
-        {/*
-         * StoreTabs receives the SSR page 1 products and passes them into
-         * StoreProductGrid, which renders them first then continues from
-         * page 2 with infinite scroll. Users see one unified product grid —
-         * no duplicate. Googlebot still sees the products in the HTML
-         * because StoreHeader + StoreTabs are both server-rendered.
-         */}
-        <StoreTabs
-          storeId={store.id}
-          storeUsername={store.storeUsername}
+        <StoreProfileClient
+          store={store}
           ssrProducts={ssrProducts}
           ssrHasNextPage={ssrHasNextPage}
         />
