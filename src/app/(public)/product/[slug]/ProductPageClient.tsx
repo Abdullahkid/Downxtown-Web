@@ -626,17 +626,19 @@ export function ProductPageClient({
                 'hover:bg-gray-50 transition-colors',
                 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
               ].join(' ')}
-              aria-label="View store profile"
+              aria-label={`Visit ${product.brandName || 'store'} on Downxtown`}
             >
               <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden flex-none">
                 <ShimmerCard width={40} height={40} className="rounded-full" />
               </div>
               <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">
-                  View Store
+                  {product.brandName || 'Visit Store'}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
-                  Tap to see all products
+                  {product.storeUsername
+                    ? `@${product.storeUsername} · See all products`
+                    : 'See all products'}
                 </p>
               </div>
               <ChevronRight size={16} className="text-gray-400 flex-none" aria-hidden="true" />
