@@ -17,6 +17,8 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
 import { OfflineBanner } from '@/components/shared/OfflineBanner'
+import { NavigationLoadingIndicator } from '@/components/shared/NavigationLoadingIndicator'
+import { NavigationLoadingProvider } from '@/components/providers/NavigationLoadingProvider'
 import './globals.css'
 
 // ---------------------------------------------------------------------------
@@ -258,10 +260,13 @@ export default function RootLayout({
 
         <ErrorBoundary>
           <QueryProvider>
-            <AuthProvider>
-              {children}
-              <OfflineBanner />
-            </AuthProvider>
+            <NavigationLoadingProvider>
+              <AuthProvider>
+                {children}
+                <OfflineBanner />
+                <NavigationLoadingIndicator />
+              </AuthProvider>
+            </NavigationLoadingProvider>
           </QueryProvider>
         </ErrorBoundary>
       </body>

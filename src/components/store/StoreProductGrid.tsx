@@ -22,6 +22,7 @@ import { ErrorState } from '@/components/shared/ErrorState'
 import { formatPrice, buildProductUrl } from '@/lib/utils/urlBuilders'
 import { api } from '@/lib/api/apiClient'
 import { useInfiniteScroll } from '@/hooks/useInfiniteScroll'
+import { useNavigationLoading } from '@/components/providers/NavigationLoadingProvider'
 import type { MiniProduct } from '@/types/product'
 import type { StoreSortOption, StoreProductsResponse, StoreProductsApiResponse } from '@/types/store'
 import { Star } from 'lucide-react'
@@ -61,6 +62,7 @@ const SORT_CHIPS: SortChip[] = [
 
 function ProductCard({ product }: { product: MiniProduct }) {
   const router = useRouter()
+  const { isNavigating } = useNavigationLoading()
 
   const discount =
     product.mrp > product.sellingPrice
@@ -76,6 +78,7 @@ function ProductCard({ product }: { product: MiniProduct }) {
         'text-left shadow-sm hover:shadow-md active:scale-[0.98]',
         'transition-all duration-150',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--brand-color,#6366f1)]',
+        isNavigating ? 'opacity-50' : '',
       ].join(' ')}
       aria-label={`${product.name}, ${formatPrice(product.sellingPrice)}`}
     >
