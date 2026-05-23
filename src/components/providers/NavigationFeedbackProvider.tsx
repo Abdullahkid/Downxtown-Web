@@ -9,13 +9,20 @@ interface NavigationFeedbackContextValue {
 
 const NavigationFeedbackContext = createContext<NavigationFeedbackContextValue | null>(null)
 
+function SearchParamsHandler({ onParamsChange }: { onParamsChange: () => void }) {
+  const searchParams = useSearchParams()
+  useEffect(() => {
+    onParamsChange()
+  }, [searchParams, onParamsChange])
+  return null
+}
+
 export function NavigationFeedbackProvider({
   children,
 }: {
   children: React.ReactNode
 }) {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
   const [isNavigating, setIsNavigating] = useState(false)
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -36,12 +43,19 @@ export function NavigationFeedbackProvider({
     }, 8000)
   }, [clearPendingTimeout])
 
-  useEffect(() => {
-    if (!isNavigating) return
+  const handleReset = useCallback(() => {
+    setIsNavigating((prev) => {
+      if (prev) {
+        clearPendingTimeout()
+        return false
+      }
+      return prev
+    })
+  }, [clearPendingTimeout])
 
-    clearPendingTimeout()
-    setIsNavigating(false)
-  }, [pathname, searchParams, isNavigating, clearPendingTimeout])
+  useEffect(() => {
+    handleReset()
+  }, [pathname, handleReset])
 
   useEffect(() => () => clearPendingTimeout(), [clearPendingTimeout])
 
@@ -52,6 +66,9 @@ export function NavigationFeedbackProvider({
 
   return (
     <NavigationFeedbackContext.Provider value={value}>
+      <React.Suspense fallback={null}>
+        <SearchParamsHandler onParamsChange={handleReset} />
+      </React.Suspense>
       <div
         aria-hidden="true"
         className={[
