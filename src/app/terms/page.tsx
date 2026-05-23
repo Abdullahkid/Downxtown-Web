@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Terms of Service | Downxtown',
   description:
     'Terms of Service for Downxtown — India\'s brand-first commerce platform.',
+  alternates: {
+    canonical: 'https://downxtown.com/terms',
+  },
   robots: { index: true, follow: true },
 }
 

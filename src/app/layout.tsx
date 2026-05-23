@@ -93,10 +93,6 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
 
   // Tells Google this site targets Indian users
-  alternates: {
-    canonical: SITE_URL,
-  },
-
   // Open Graph — baseline for all pages
   openGraph: {
     type: 'website',

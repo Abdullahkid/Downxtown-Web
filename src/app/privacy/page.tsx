@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Privacy Policy | Downxtown',
   description:
     'Privacy Policy for Downxtown — India\'s brand-first commerce platform.',
+  alternates: {
+    canonical: 'https://downxtown.com/privacy',
+  },
   robots: { index: true, follow: true },
 }
 

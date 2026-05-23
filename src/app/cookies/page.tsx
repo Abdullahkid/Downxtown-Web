@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: 'Cookie Policy | Downxtown',
   description:
     'Cookie Policy for Downxtown — India\'s brand-first commerce platform.',
+  alternates: {
+    canonical: 'https://downxtown.com/cookies',
+  },
   robots: { index: true, follow: true },
 }
 
