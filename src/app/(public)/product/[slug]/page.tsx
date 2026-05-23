@@ -159,9 +159,48 @@ async function fetchProduct(productId: string): Promise<Product | null> {
   }
 }
 
-async function fetchRelatedProducts(_productId: string): Promise<MiniProduct[]> {
-  // No related products endpoint exists in the backend yet
-  return []
+async function fetchRelatedProducts(productId: string): Promise<MiniProduct[]> {
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/v1/products/${productId}/related?limit=6`,
+      { next: { revalidate: 3600 } }, // related products change slowly
+    )
+    if (!res.ok) return []
+
+    const body = await res.json() as {
+      products?: Array<{
+        id: string
+        name?: string
+        title?: string
+        mainImageUrl?: string
+        sellingPrice: number
+        mrp?: number
+        averageRating?: number
+        businessId?: string
+        mainCategory?: string
+        storeUsername?: string
+        shopifyHandle?: string | null
+      }>
+    }
+
+    if (!body.products?.length) return []
+
+    return body.products.map((p) => ({
+      id: p.id,
+      businessId: p.businessId ?? '',
+      name: p.name ?? p.title ?? '',
+      mainImageUrl: p.mainImageUrl ?? '',
+      sellingPrice: p.sellingPrice,
+      mrp: p.mrp ?? p.sellingPrice,
+      averageRating: p.averageRating ?? 0,
+      mainCategory: p.mainCategory ?? '',
+      storeName: '',
+      storeUsername: p.storeUsername ?? '',
+      shopifyHandle: p.shopifyHandle ?? null,
+    }))
+  } catch {
+    return []
+  }
 }
 
 // ---------------------------------------------------------------------------
