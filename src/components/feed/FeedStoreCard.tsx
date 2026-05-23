@@ -14,13 +14,12 @@
  */
 
 import React, { useState, useCallback } from 'react'
-import Link from 'next/link'
 import { Star, ChevronRight } from 'lucide-react'
 import { ImageLoader } from '@/components/shared'
+import { InstantLink } from '@/components/shared/InstantLink'
 import { MiniProductCard } from './MiniProductCard'
 import { api } from '@/lib/api/apiClient'
 import { logStoreClick, logFollowStore } from '@/lib/analytics/analyticsProvider'
-import { useNavigationLoading } from '@/components/providers/NavigationLoadingProvider'
 import type { FeedStore } from '@/types/feed'
 
 interface FeedStoreCardProps {
@@ -31,7 +30,6 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
   // Local optimistic follow state — starts from server value
   const [isFollowing, setIsFollowing] = useState(store.isFollowing)
   const [isFollowLoading, setIsFollowLoading] = useState(false)
-  const { isNavigating } = useNavigationLoading()
 
   // -------------------------------------------------------------------------
   // Follow / Unfollow with optimistic update (Req 7.10, 7.11)
@@ -86,12 +84,9 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
       {/* Store header — Link for instant prefetch navigation (Req 7.7)       */}
       {/* Analytics fires as a non-blocking side effect on click              */}
       {/* ------------------------------------------------------------------ */}
-      <Link
+      <InstantLink
         href={`/store/${store.storeUsername}`}
-        className={[
-          'relative z-10 w-full flex items-start gap-3 px-4 pb-3',
-          isNavigating ? 'opacity-50' : '',
-        ].join(' ')}
+        className="relative z-10 w-full flex items-start gap-3 px-4 pb-3"
         aria-label={`Visit ${store.storeName} store`}
         onClick={() => logStoreClick({
           store_id: store.businessId,
@@ -162,7 +157,7 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
             'Follow'
           )}
         </button>
-      </Link>
+      </InstantLink>
 
       {/* ------------------------------------------------------------------ */}
       {/* Horizontal scrollable product row (Req 7.6)                         */}
@@ -193,7 +188,7 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
       )}
 
       {/* See all products — navigates to store profile */}
-      <Link
+      <InstantLink
         href={`/store/${store.storeUsername}`}
         className={[
           'relative z-10 flex items-center justify-center gap-1 py-2.5',
@@ -201,14 +196,13 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
           'hover:bg-brand-accent/5 transition-colors rounded-b-[16px]',
           'focus-visible:outline focus-visible:outline-2',
           'focus-visible:outline-offset-2 focus-visible:outline-brand',
-          isNavigating ? 'opacity-50' : '',
         ].join(' ')}
         aria-label={`See all products from ${store.storeName}`}
         onClick={(e) => e.stopPropagation()}
       >
         See all products
         <ChevronRight size={13} aria-hidden="true" />
-      </Link>
+      </InstantLink>
     </article>
   )
 }

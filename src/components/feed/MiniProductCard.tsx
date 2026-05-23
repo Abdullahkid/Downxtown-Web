@@ -3,12 +3,21 @@
 /**
  * MiniProductCard - compact product card used inside FeedStoreCard's
  * horizontal scroll row.
+ *
+ * Uses <Link> instead of <button onClick={router.push}> so Next.js
+ * prefetches the destination page when the card enters the viewport.
+ * This makes navigation feel instant — the page is already in cache
+ * before the user taps.
+ *
+ * Long-press still works: pointerDown starts a timer, pointerUp cancels it.
+ * If a long-press fires, we call preventDefault() on the Link's click event
+ * to block navigation and show the image overlay instead.
  */
 
 import React, { useRef, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { X } from 'lucide-react'
 import { ImageLoader } from '@/components/shared'
+import { InstantLink } from '@/components/shared/InstantLink'
 import { buildProductUrl } from '@/lib/utils/urlBuilders'
 import type { MiniProduct } from '@/types/product'
 
@@ -19,7 +28,6 @@ interface MiniProductCardProps {
 const INR_SYMBOL = '\u20B9'
 
 export function MiniProductCard({ product }: MiniProductCardProps) {
-  const router = useRouter()
   const [overlayVisible, setOverlayVisible] = useState(false)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const didLongPress = useRef(false)
@@ -37,27 +45,20 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
     }, 500)
   }, [])
 
-  const handlePointerUp = useCallback(() => {
+  const clearLongPressTimer = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current)
       longPressTimer.current = null
     }
   }, [])
 
-  const handlePointerLeave = useCallback(() => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-  }, [])
-
-  const handleClick = useCallback(() => {
+  // If a long-press fired, block the Link navigation
+  const handleClick = useCallback((e: React.MouseEvent) => {
     if (didLongPress.current) {
+      e.preventDefault()
       didLongPress.current = false
-      return
     }
-    router.push(buildProductUrl(product.id, product.shopifyHandle))
-  }, [router, product.id, product.shopifyHandle])
+  }, [])
 
   const dismissOverlay = useCallback(() => {
     setOverlayVisible(false)
@@ -65,20 +66,20 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
 
   return (
     <>
-      <button
-        type="button"
+      <InstantLink
+        href={buildProductUrl(product.id, product.shopifyHandle)}
         aria-label={`View ${product.name}`}
         className={[
           'flex-shrink-0 w-[176px] rounded-[12px] overflow-hidden',
           'bg-surface border border-border',
           'text-left focus-visible:outline focus-visible:outline-2',
           'focus-visible:outline-offset-2 focus-visible:outline-brand',
-          'hover:scale-[1.03] transition-transform select-none',
+          'hover:scale-[1.03] transition-transform select-none block',
         ].join(' ')}
         onClick={handleClick}
         onPointerDown={handlePointerDown}
-        onPointerUp={handlePointerUp}
-        onPointerLeave={handlePointerLeave}
+        onPointerUp={clearLongPressTimer}
+        onPointerLeave={clearLongPressTimer}
       >
         <div className="relative w-full h-[190px] bg-bg-4 product-color-1 flex items-center justify-center overflow-hidden">
           <ImageLoader
@@ -118,7 +119,7 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
             {product.name}
           </p>
         </div>
-      </button>
+      </InstantLink>
 
       {overlayVisible && (
         <div

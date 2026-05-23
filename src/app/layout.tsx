@@ -16,9 +16,8 @@ import { DM_Sans, Bebas_Neue, DM_Serif_Display, Archivo } from 'next/font/google
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { AuthProvider } from '@/components/providers/AuthProvider'
 import { ErrorBoundary } from '@/components/providers/ErrorBoundary'
+import { NavigationFeedbackProvider } from '@/components/providers/NavigationFeedbackProvider'
 import { OfflineBanner } from '@/components/shared/OfflineBanner'
-import { NavigationLoadingIndicator } from '@/components/shared/NavigationLoadingIndicator'
-import { NavigationLoadingProvider } from '@/components/providers/NavigationLoadingProvider'
 import './globals.css'
 
 // ---------------------------------------------------------------------------
@@ -259,15 +258,14 @@ export default function RootLayout({
         />
 
         <ErrorBoundary>
-          <QueryProvider>
-            <NavigationLoadingProvider>
+          <NavigationFeedbackProvider>
+            <QueryProvider>
               <AuthProvider>
                 {children}
                 <OfflineBanner />
-                <NavigationLoadingIndicator />
               </AuthProvider>
-            </NavigationLoadingProvider>
-          </QueryProvider>
+            </QueryProvider>
+          </NavigationFeedbackProvider>
         </ErrorBoundary>
       </body>
     </html>
