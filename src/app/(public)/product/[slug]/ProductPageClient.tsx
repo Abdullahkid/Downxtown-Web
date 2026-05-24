@@ -324,8 +324,12 @@ export function ProductPageClient({
   const mrp = selectedVariant?.mrp ?? 0
   const inventory = selectedVariant?.inventory ?? 0
   const isOutOfStock = selectedVariant ? selectedVariant.status !== 'AVAILABLE' : false
+  const isAdminProduct = product.managedBy === 'ADMIN'
   const discount = discountPercent(sellingPrice, mrp)
-  const maxQty = Math.min(inventory, 10)
+  // Admin products always have inventory=0 (they go to Shopify cart, quantity N/A).
+  // For seller products, if inventory is 0 but status is AVAILABLE, cap at 10 as a
+  // safe fallback — the backend may not have inventory tracking enabled for that seller.
+  const maxQty = isAdminProduct ? 0 : inventory > 0 ? Math.min(inventory, 10) : 10
 
   // -------------------------------------------------------------------------
   // Handlers
@@ -338,9 +342,7 @@ export function ProductPageClient({
   const handleBuyNow = useCallback(() => {
     if (!selectedVariant || isOutOfStock) return
 
-    const isAdminManaged = product.managedBy === 'ADMIN'
-
-    if (isAdminManaged) {
+    if (isAdminProduct) {
       // Admin/Shopify store — open external cart URL, bypass in-app checkout
       // Mirrors Android: "$websiteUrl/cart/$variantId:1" → fallback to product page
       const websiteUrl = product.storeWebsiteUrl
@@ -361,7 +363,7 @@ export function ProductPageClient({
     router.push(
       `/checkout?productId=${productId}&variantId=${selectedVariant.id}&quantity=${quantity}`,
     )
-  }, [router, productId, product, selectedVariant, quantity, isOutOfStock])
+  }, [router, productId, product, selectedVariant, quantity, isOutOfStock, isAdminProduct])
 
   const handleWishlist = useCallback(async () => {
     if (wishlistLoading || wishlistAdded) return
@@ -521,31 +523,53 @@ export function ProductPageClient({
             )}
 
             {/* Quantity selector — Req 10.7 */}
-            {!isOutOfStock && (
+            {!isOutOfStock && !isAdminProduct && (
               <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="quantity-select"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Quantity
-                </label>
-                <select
-                  id="quantity-select"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  className={[
-                    'w-28 min-h-[44px] px-3 py-2 rounded-lg border border-gray-300',
-                    'text-sm text-gray-800 bg-white',
-                    'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                  ].join(' ')}
-                  aria-label="Select quantity"
-                >
-                  {Array.from({ length: maxQty }, (_, i) => i + 1).map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
+                <span className="text-sm font-medium text-gray-700">Quantity</span>
+                <div className="flex items-center gap-0">
+                  <button
+                    type="button"
+                    aria-label="Decrease quantity"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    className={[
+                      'w-11 h-11 flex items-center justify-center rounded-l-lg border border-gray-300',
+                      'text-lg font-medium text-gray-700 bg-white transition-colors',
+                      'hover:bg-gray-50 active:bg-gray-100',
+                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
+                      quantity <= 1 ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+                    ].join(' ')}
+                  >
+                    −
+                  </button>
+                  <div
+                    className="w-12 h-11 flex items-center justify-center border-t border-b border-gray-300 text-sm font-semibold text-gray-900 bg-white select-none"
+                    aria-live="polite"
+                    aria-label={`Quantity: ${quantity}`}
+                  >
+                    {quantity}
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="Increase quantity"
+                    onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                    disabled={quantity >= maxQty}
+                    className={[
+                      'w-11 h-11 flex items-center justify-center rounded-r-lg border border-gray-300',
+                      'text-lg font-medium text-gray-700 bg-white transition-colors',
+                      'hover:bg-gray-50 active:bg-gray-100',
+                      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500',
+                      quantity >= maxQty ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
+                    ].join(' ')}
+                  >
+                    +
+                  </button>
+                </div>
+                {inventory > 0 && inventory <= 5 && (
+                  <p className="text-xs text-orange-600 font-medium">
+                    Only {inventory} left in stock
+                  </p>
+                )}
               </div>
             )}
 
