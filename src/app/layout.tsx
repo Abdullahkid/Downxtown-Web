@@ -231,6 +231,17 @@ export default function RootLayout({
     // Indian users, improving geo-relevance for Tier 2/3 city queries.
     <html lang="en-IN" className={`${dmSans.variable} ${bebasNeue.variable} ${dmSerifDisplay.variable} ${archivo.variable}`}>
       <body suppressHydrationWarning>
+        {/* Microsoft Clarity — loads after page is interactive so it never
+            blocks rendering or Core Web Vitals scores. */}
+        <Script id="microsoft-clarity" strategy="afterInteractive">
+          {`
+            (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "wvw74nteu6");
+          `}
+        </Script>
         {/* Google Analytics 4 — loads after page is interactive (afterInteractive)
             so it never blocks rendering or Core Web Vitals scores. */}
         <Script

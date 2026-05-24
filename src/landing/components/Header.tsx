@@ -41,13 +41,16 @@ export function Header() {
           }`}
       >
         <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-          <Link href="/welcom" className="flex items-center gap-4 group">
-            <div className="w-16 h-16 relative flex items-center justify-center border border-white/10 rounded-xl bg-white/[0.03] group-hover:border-blue/30 group-hover:bg-white/[0.05] transition-all duration-300">
-              <div className="w-14 h-14 relative">
-                <Image src="/landing/logo.png" alt="Downxtown logo" fill className="object-contain" />
-              </div>
+          <Link href="/welcom" className="flex items-center group">
+            <div className="relative h-12 w-40 md:h-14 md:w-48">
+              <Image
+                src="/landing/LightVersionLogo1.png"
+                alt="Downxtown"
+                fill
+                className="object-contain object-left"
+                priority
+              />
             </div>
-            <span className="font-bebas text-2xl tracking-[2px] text-white group-hover:text-blue transition-colors">Downxtown</span>
           </Link>
 
           {/* Desktop Nav */}
