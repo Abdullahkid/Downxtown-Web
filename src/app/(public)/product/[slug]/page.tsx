@@ -469,6 +469,49 @@ function buildJsonLd(product: Product, productId: string, reviewStats?: ReviewSt
           priceValidUntil: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             .toISOString()
             .split('T')[0],
+          // Req: shippingDetails — satisfies Google Search Console "Missing field" warning
+          shippingDetails: {
+            '@type': 'OfferShippingDetails',
+            shippingRate: {
+              '@type': 'MonetaryAmount',
+              value: product.shippingCost === 0 ? '0' : product.shippingCost.toFixed(2),
+              currency: 'INR',
+            },
+            shippingDestination: {
+              '@type': 'DefinedRegion',
+              addressCountry: 'IN',
+            },
+            deliveryTime: {
+              '@type': 'ShippingDeliveryTime',
+              handlingTime: {
+                '@type': 'QuantitativeValue',
+                minValue: 0,
+                maxValue: 2,
+                unitCode: 'DAY',
+              },
+              transitTime: {
+                '@type': 'QuantitativeValue',
+                minValue: product.estimatedDeliveryDays ?? 3,
+                maxValue: (product.estimatedDeliveryDays ?? 3) + 2,
+                unitCode: 'DAY',
+              },
+            },
+          },
+          // Req: hasMerchantReturnPolicy — satisfies Google Search Console "Missing field" warning
+          hasMerchantReturnPolicy: {
+            '@type': 'MerchantReturnPolicy',
+            applicableCountry: 'IN',
+            returnPolicyCategory: product.isReturnable
+              ? 'https://schema.org/MerchantReturnFiniteReturnWindow'
+              : 'https://schema.org/MerchantReturnNotPermitted',
+            ...(product.isReturnable
+              ? {
+                  merchantReturnDays: product.returnWindowDays ?? 7,
+                  returnMethod: 'https://schema.org/ReturnByMail',
+                  returnFees: 'https://schema.org/FreeReturn',
+                }
+              : {}),
+          },
         }
       : undefined,
   }
