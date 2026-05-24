@@ -159,6 +159,71 @@ async function fetchProduct(productId: string): Promise<Product | null> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Review stats for structured data
+// ---------------------------------------------------------------------------
+
+interface ReviewStats {
+  averageRating: number
+  totalReviews: number
+  topReviews: Array<{
+    id: string
+    customerName: string
+    rating: number
+    comment: string
+    createdAt: number
+  }>
+}
+
+async function fetchReviewStats(productId: string): Promise<ReviewStats | null> {
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/v1/products/${productId}/reviews?page=1&limit=3`,
+      { next: { revalidate: 300 } }, // reviews change moderately often
+    )
+    if (!res.ok) return null
+
+    // Response shape: ApiResponse<PaginatedProductReviewsResponse>
+    // Backend model: MiniProductReview uses `customerName` (not `reviewerName`)
+    const body = await res.json() as {
+      success: boolean
+      data: {
+        reviews: Array<{
+          id: string
+          customerName: string       // backend field name
+          customerAvatar?: string | null
+          rating: number
+          comment: string
+          reviewTitle?: string | null
+          isVerifiedPurchase: boolean
+          createdAt: number          // Unix milliseconds
+        }>
+        stats: {
+          averageRating: number
+          totalReviews: number
+          ratingDistribution: Record<string, number>
+          verifiedPurchasePercentage: number
+          totalWithImages: number
+        }
+        currentPage: number
+        totalPages: number
+        hasNextPage: boolean
+        totalReviews: number         // also mirrored in stats.totalReviews
+      } | null
+    }
+
+    if (!body.data) return null
+
+    return {
+      averageRating: body.data.stats?.averageRating ?? 0,
+      totalReviews: body.data.totalReviews ?? 0,
+      topReviews: body.data.reviews ?? [],
+    }
+  } catch {
+    return null
+  }
+}
+
 async function fetchRelatedProducts(productId: string): Promise<MiniProduct[]> {
   try {
     const res = await fetch(
@@ -315,7 +380,7 @@ export async function generateMetadata({
 // Requirements: 21.2 — Schema.org Product + Offer
 // ---------------------------------------------------------------------------
 
-function buildJsonLd(product: Product, productId: string): string {
+function buildJsonLd(product: Product, productId: string, reviewStats?: ReviewStats | null): string {
   const defaultVariant = product.variants[0]
   const firstImageGroup = product.imageGroups[0]
   const firstImageId = firstImageGroup?.images[0]
@@ -357,18 +422,40 @@ function buildJsonLd(product: Product, productId: string): string {
           },
         }
       : {}),
-    aggregateRating:
-      product.averageRating > 0
-        ? {
-            '@type': 'AggregateRating',
-            ratingValue: product.averageRating.toFixed(1),
+    aggregateRating: (() => {
+      // Prefer review stats from the reviews endpoint (has totalReviews).
+      // Fall back to product.averageRating if stats aren't available yet.
+      const rating = reviewStats?.averageRating ?? product.averageRating
+      const count = reviewStats?.totalReviews ?? 0
+      if (rating <= 0 || count === 0) return undefined
+      return {
+        '@type': 'AggregateRating',
+        ratingValue: rating.toFixed(1),
+        bestRating: '5',
+        worstRating: '1',
+        reviewCount: count,
+      }
+    })(),
+    // Include up to 3 individual reviews so Google can show rich review snippets.
+    // reviewCount in aggregateRating satisfies the "review" warning in Search Console.
+    review: reviewStats?.topReviews?.length
+      ? reviewStats.topReviews.map((r) => ({
+          '@type': 'Review',
+          author: {
+            '@type': 'Person',
+            name: r.customerName,
+          },
+          reviewRating: {
+            '@type': 'Rating',
+            ratingValue: r.rating.toFixed(1),
             bestRating: '5',
             worstRating: '1',
-            // reviewCount is intentionally omitted here — the backend does not
-            // currently return a review count on the product page endpoint.
-            // Once the backend includes it, add: reviewCount: product.reviewCount
-          }
-        : undefined,
+          },
+          reviewBody: r.comment || undefined,
+          // createdAt is Unix milliseconds from the backend
+          datePublished: new Date(r.createdAt).toISOString().split('T')[0],
+        }))
+      : undefined,
     offers: defaultVariant
       ? {
           '@type': 'Offer',
@@ -449,10 +536,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
-  // Fetch product and related products in parallel
-  const [product, relatedProducts] = await Promise.all([
+  // Fetch product, related products, and review stats in parallel
+  const [product, relatedProducts, reviewStats] = await Promise.all([
     fetchProduct(productId),
     fetchRelatedProducts(productId),
+    fetchReviewStats(productId),
   ])
 
   if (!product) {
@@ -480,7 +568,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
     permanentRedirect(`/product/${canonicalSlug}`)
   }
 
-  const jsonLd = buildJsonLd(product, productId)
+  const jsonLd = buildJsonLd(product, productId, reviewStats)
 
   return (
     <>

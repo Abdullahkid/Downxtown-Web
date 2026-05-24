@@ -29,7 +29,7 @@ const AUTH_COOKIE_NAME = 'auth-token'
  * Protected path prefixes. Any request whose pathname starts with one of
  * these values will require the `auth-token` cookie to be present.
  */
-const PROTECTED_PATHS = ['/chat', '/orders', '/profile', '/checkout'] as const
+const PROTECTED_PATHS = ['/chat', '/orders', '/profile', '/checkout', '/following'] as const
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PATHS.some(
@@ -73,5 +73,7 @@ export const config = {
     '/profile/:path*',
     '/checkout',
     '/checkout/:path*',
+    '/following',
+    '/following/:path*',
   ],
 }

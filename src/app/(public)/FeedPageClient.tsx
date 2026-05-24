@@ -161,7 +161,7 @@ export function FeedPageClient() {
         const params = new URLSearchParams()
         params.set('page', String(pageParam))
         params.set('limit', '10')
-        params.set('productsPerStore', '5')
+        params.set('productsPerStore', '8')
         if (gender) params.set('gender', gender)
 
         // Mirror Android: use /feed/filtered when a category is active,

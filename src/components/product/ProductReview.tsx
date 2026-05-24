@@ -43,11 +43,13 @@ interface BackendReviewsResponse {
   data: {
     reviews: Array<{
       id: string
-      reviewerName: string
-      reviewerImageId?: string
+      customerName: string        // backend field: customerName (not reviewerName)
+      customerAvatar?: string | null
       rating: number
       comment: string
-      createdAt: number
+      reviewTitle?: string | null
+      isVerifiedPurchase: boolean
+      createdAt: number           // Unix milliseconds
     }>
     stats: { averageRating: number; totalReviews: number }
     currentPage: number
@@ -192,8 +194,8 @@ export function ProductReview({ productId, averageRating }: ProductReviewProps) 
 
         const mappedReviews: ProductReviewItem[] = (data.reviews ?? []).map(r => ({
           id: r.id,
-          reviewerName: r.reviewerName,
-          reviewerImageId: r.reviewerImageId,
+          reviewerName: r.customerName,       // backend sends customerName
+          reviewerImageId: r.customerAvatar ?? undefined,
           rating: r.rating,
           comment: r.comment,
           createdAt: r.createdAt,

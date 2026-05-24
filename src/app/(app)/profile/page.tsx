@@ -27,6 +27,7 @@ import {
   Check,
   X,
   MessageSquare,
+  Heart,
   ChevronRight,
 } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
@@ -34,6 +35,7 @@ import { useUiStore } from '@/store/uiStore'
 import { useAuth } from '@/hooks/useAuth'
 import { api, ApiError } from '@/lib/api/apiClient'
 import { ProfileStats, AddressManager, WishlistGrid } from '@/components/profile'
+import { AuthGuard } from '@/components/shared'
 import type { Personal } from '@/types/user'
 
 // ---------------------------------------------------------------------------
@@ -380,16 +382,10 @@ export default function ProfilePage() {
   // -------------------------------------------------------------------------
   // Render
   // -------------------------------------------------------------------------
-  if (!user) {
-    return (
-      <main className="flex items-center justify-center min-h-screen">
-        <Loader2 size={32} className="animate-spin text-blue-600" aria-label="Loading profile…" />
-      </main>
-    )
-  }
-
   return (
-    <main className="min-h-screen bg-gray-50 pb-24">
+    <AuthGuard>
+      {user && (
+      <main className="min-h-screen bg-gray-50 pb-24">
       <div className="px-4 py-4 max-w-5xl mx-auto">
         {/* ---------------------------------------------------------------- */}
         {/* Two-column desktop layout (Requirements 6.11, 6.12)              */}
@@ -530,6 +526,28 @@ export default function ProfilePage() {
               </Link>
             </div>
 
+            {/* Following */}
+            <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
+              <Link
+                href="/following"
+                className="flex items-center justify-between px-4 py-4 hover:bg-gray-50 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                aria-label="View followed stores"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-bg">
+                    <Heart size={18} className="text-brand" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-800">Following</p>
+                    <p className="text-xs text-gray-400">
+                      Stores you follow
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={18} className="text-gray-400 shrink-0" aria-hidden="true" />
+              </Link>
+            </div>
+
             {/* Address Management (Req 16.6–16.8, 28.1–28.7) */}
             <div className="rounded-xl overflow-hidden border border-gray-200 bg-white">
               <div className="px-4 py-3 border-b border-gray-100">
@@ -566,5 +584,7 @@ export default function ProfilePage() {
         </p>
       </div>
     </main>
+      )}
+    </AuthGuard>
   )
 }
