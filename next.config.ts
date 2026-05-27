@@ -8,29 +8,6 @@ const nextConfig: NextConfig = {
   },
 
   /**
-   * Redirect www → non-www (permanent 301).
-   *
-   * Google crawls both https://www.downxtown.com/* and https://downxtown.com/*
-   * and treats them as duplicate pages when no canonical is declared on the
-   * www version. This redirect ensures the www variant always returns a 301
-   * to the canonical non-www URL, eliminating the "Duplicate without
-   * user-selected canonical" issue in Google Search Console.
-   *
-   * The :path* wildcard preserves the full path and query string so deep
-   * links (product pages, store pages, etc.) redirect correctly.
-   */
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.downxtown.com' }],
-        destination: 'https://downxtown.com/:path*',
-        permanent: true, // 301 — tells Google to update its index
-      },
-    ]
-  },
-
-  /**
    * Rewrite /api-proxy/* → https://api.downxtown.com/* during local dev.
    *
    * This proxy runs on the Next.js Node.js server, so the request to the
