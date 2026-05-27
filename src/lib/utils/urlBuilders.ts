@@ -16,9 +16,10 @@
  *   /product/{slugBase}-{productId}
  *   e.g. /product/rockstar-stitch-oversized-t-shirt-695d5897429a7676c733204c
  *
- * slugBase is capped at 60 characters, truncated cleanly at a word boundary
- * (last hyphen), so excessively long Shopify handles are trimmed consistently
- * with the backend sitemap builder.
+ * The full slugBase is used as-is — no truncation — so the URL exactly matches
+ * what the backend sitemap builder emits and what the page component serves.
+ * This prevents canonical tag mismatches that cause Google Search Console to
+ * report "Alternate page with proper canonical tag".
  *
  * When no slugBase is provided (legacy fallback), the URL is:
  *   /product/{productId}
@@ -34,40 +35,9 @@
  */
 export function buildProductUrl(productId: string, slugBase?: string | null): string {
   if (slugBase?.trim()) {
-    const trimmed = truncateSlug(slugBase.trim())
-    return `/product/${trimmed}-${productId}`
+    return `/product/${slugBase.trim()}-${productId}`
   }
   return `/product/${productId}`
-}
-
-/**
- * Truncates a slug to a maximum of MAX_WORDS words (hyphen-separated segments),
- * with MAX_CHARS as a hard safety-net cap.
- *
- * Word-based capping keeps complete, meaningful words in the URL rather than
- * cutting a word mid-way at a character boundary. The first 6 words capture
- * brand name + product type + key differentiator — enough for SEO relevance.
- * The hard 75-char cap is a safety net for edge cases where 6 words are long.
- *
- * Mirrors the Kotlin `buildProductSlug` function in SitemapRoutes.kt exactly —
- * both must produce the same truncated slug for the redirect logic in page.tsx
- * to correctly identify whether a URL is already canonical.
- *
- * Examples:
- *   "bacca-bucci-boundary-blazers-cricket-shoes-dynamic-flex-tech-superior-traction"
- *   → "bacca-bucci-boundary-blazers-cricket-shoes"  (6 words)
- *
- *   "rockstar-stitch-oversized-t-shirt-1"
- *   → "rockstar-stitch-oversized-t-shirt-1"  (5 words, unchanged)
- */
-function truncateSlug(slug: string, maxWords = 6, maxChars = 75): string {
-  const words = slug.split('-').filter(Boolean)
-  const wordCapped = words.slice(0, maxWords).join('-')
-  // Hard cap safety net — only fires if a word itself is unusually long
-  if (wordCapped.length <= maxChars) return wordCapped
-  const truncated = wordCapped.substring(0, maxChars)
-  const lastHyphen = truncated.lastIndexOf('-')
-  return lastHyphen > 0 ? truncated.substring(0, lastHyphen) : truncated
 }
 
 /**

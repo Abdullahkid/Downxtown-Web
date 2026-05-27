@@ -40,18 +40,6 @@ import { ProductPageClient } from './ProductPageClient'
 const API_BASE = 'https://api.downxtown.com'
 const SITE_URL = 'https://downxtown.com'
 
-/** Truncates a slug to first MAX_WORDS words, with MAX_CHARS as a hard safety-net cap.
- *  Mirrors truncateSlug() in urlBuilders.ts and buildProductSlug() in SitemapRoutes.kt exactly.
- */
-function truncateSlug(slug: string, maxWords = 6, maxChars = 75): string {
-  const words = slug.split('-').filter(Boolean)
-  const wordCapped = words.slice(0, maxWords).join('-')
-  if (wordCapped.length <= maxChars) return wordCapped
-  const truncated = wordCapped.substring(0, maxChars)
-  const lastHyphen = truncated.lastIndexOf('-')
-  return lastHyphen > 0 ? truncated.substring(0, lastHyphen) : truncated
-}
-
 /** MongoDB ObjectId is always exactly 24 lowercase hex characters. */
 const OBJECT_ID_RE = /^[a-f0-9]{24}$/
 
@@ -599,12 +587,12 @@ export default async function ProductPage({ params }: ProductPageProps) {
   //     → /product/rockstar-stitch-oversized-t-shirt-1-695d5897429a7676c733204c
   //  2. Any stale slug that differs from the current shopifyHandle
   //
-  // The canonical slug is "{shopifyHandle}-{id}" (or bare id if no handle).
+  // The canonical slug is "{shopifyHandle}-{id}" (full handle, no truncation).
   // We compare the incoming slug to the canonical form so we don't redirect
   // on every request — only when the slug is wrong or missing.
   // -------------------------------------------------------------------------
   const canonicalSlug = product.shopifyHandle
-    ? `${truncateSlug(product.shopifyHandle)}-${productId}`
+    ? `${product.shopifyHandle}-${productId}`
     : productId
 
   if (slug !== canonicalSlug) {

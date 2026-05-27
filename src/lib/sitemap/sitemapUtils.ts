@@ -77,7 +77,9 @@ export async function fetchCollections(): Promise<SitemapCollectionEntry[]> {
 }
 
 // ---------------------------------------------------------------------------
-// URL builder — consistent with the product page's truncateSlug logic
+// URL builder — uses the full slug with no truncation so sitemap URLs exactly
+// match the canonical URLs served by the product page and its metadata.
+// This prevents Google Search Console "Alternate page with proper canonical tag" errors.
 // ---------------------------------------------------------------------------
 
 export function buildProductSitemapUrl(id: string, slug: string): string {
