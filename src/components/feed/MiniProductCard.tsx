@@ -70,27 +70,34 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
         href={buildProductUrl(product.id, product.shopifyHandle)}
         aria-label={`View ${product.name}`}
         className={[
-          // Responsive width: ~45vw on mobile so 2 cards fit with a peek of the 3rd,
-          // fixed 176px on md+ where the card is inside a wider container
-          'flex-shrink-0 w-[45vw] md:w-[176px] rounded-[12px] overflow-hidden',
+          // Width and height are set via inline style below using CSS min() + calc()
+          // so the complex expression is handled by the browser, not Tailwind's JIT.
+          'flex-shrink-0 rounded-[12px] overflow-hidden',
           'bg-surface border border-border',
           'text-left focus-visible:outline focus-visible:outline-2',
           'focus-visible:outline-offset-2 focus-visible:outline-brand',
           'hover:scale-[1.03] transition-transform select-none block',
         ].join(' ')}
+        // (100vw - 24px padding - 12px gap - 28px peek) / 2 = (100vw - 64px) / 2
+        // Capped at 176px so desktop cards stay at their original size.
+        style={{ width: 'min(calc((100vw - 64px) / 2), 176px)' }}
         onClick={handleClick}
         onPointerDown={handlePointerDown}
         onPointerUp={clearLongPressTimer}
         onPointerLeave={clearLongPressTimer}
       >
-        <div className="relative w-full h-[calc(45vw*1.1)] md:h-[190px] bg-bg-4 product-color-1 flex items-center justify-center overflow-hidden">
+        <div
+          className="relative w-full bg-bg-4 product-color-1 flex items-center justify-center overflow-hidden"
+          // Height = width × 1.1 for a portrait aspect ratio, capped at 190px
+          style={{ height: 'min(calc((100vw - 64px) / 2 * 1.1), 190px)' }}
+        >
           <ImageLoader
             imageId={product.mainImageUrl}
             endpoint="detail"
             alt={product.name}
             fill
             imageContext="product"
-            sizes="(max-width: 768px) 45vw, 176px"
+            sizes="(max-width: 768px) calc((100vw - 64px) / 2), 176px"
           />
           {discountPct > 0 && (
             <span
