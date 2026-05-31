@@ -70,7 +70,9 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
         href={buildProductUrl(product.id, product.shopifyHandle)}
         aria-label={`View ${product.name}`}
         className={[
-          'flex-shrink-0 w-[176px] rounded-[12px] overflow-hidden',
+          // Responsive width: ~45vw on mobile so 2 cards fit with a peek of the 3rd,
+          // fixed 176px on md+ where the card is inside a wider container
+          'flex-shrink-0 w-[45vw] md:w-[176px] rounded-[12px] overflow-hidden',
           'bg-surface border border-border',
           'text-left focus-visible:outline focus-visible:outline-2',
           'focus-visible:outline-offset-2 focus-visible:outline-brand',
@@ -81,14 +83,14 @@ export function MiniProductCard({ product }: MiniProductCardProps) {
         onPointerUp={clearLongPressTimer}
         onPointerLeave={clearLongPressTimer}
       >
-        <div className="relative w-full h-[190px] bg-bg-4 product-color-1 flex items-center justify-center overflow-hidden">
+        <div className="relative w-full h-[calc(45vw*1.1)] md:h-[190px] bg-bg-4 product-color-1 flex items-center justify-center overflow-hidden">
           <ImageLoader
             imageId={product.mainImageUrl}
             endpoint="detail"
             alt={product.name}
             fill
             imageContext="product"
-            sizes="176px"
+            sizes="(max-width: 768px) 45vw, 176px"
           />
           {discountPct > 0 && (
             <span

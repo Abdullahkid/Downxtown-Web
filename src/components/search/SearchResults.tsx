@@ -207,7 +207,7 @@ function StoreCard({ store, query }: { store: SearchStore; query: string }) {
       <Link
         href={`/store/${store.username}`}
         className={[
-          'relative z-10 w-full flex items-start gap-3 px-4 pb-3',
+          'relative z-10 w-full flex items-start gap-3 px-3 pb-3',
           'focus-visible:outline focus-visible:outline-2',
           'focus-visible:outline-offset-2 focus-visible:outline-brand',
         ].join(' ')}
@@ -275,7 +275,7 @@ function StoreCard({ store, query }: { store: SearchStore; query: string }) {
           role="region"
           aria-label={`${store.name} products`}
         >
-          <div className="flex gap-3 px-4 pb-1 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-3 px-3 pr-[10vw] md:pr-3 pb-1 overflow-x-auto scrollbar-hide">
             {store.products.map((product) => (
               <MiniProductCard key={product.id} product={product} />
             ))}
