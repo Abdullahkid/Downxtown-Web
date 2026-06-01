@@ -113,8 +113,10 @@ export default function PrivacyPage() {
         {/* Footer nav */}
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-wrap gap-6 text-xs text-white/30">
           <Link href="/welcome" className="hover:text-white transition-colors">Home</Link>
+          <Link href="/privacy-policy" className="hover:text-white transition-colors">Full Privacy Policy</Link>
           <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
           <Link href="/cookies" className="hover:text-white transition-colors">Cookie Policy</Link>
+          <Link href="/return-policy" className="hover:text-white transition-colors">Return Policy</Link>
           <Link href="/" className="hover:text-white transition-colors">Browse Feed</Link>
         </div>
       </div>
