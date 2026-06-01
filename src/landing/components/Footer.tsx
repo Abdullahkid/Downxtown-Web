@@ -30,7 +30,7 @@ const footerLinks = {
     { name: "Contact Us", href: "#contact" },
   ],
   Company: [
-    { name: "Pitch Deck", href: "/pitch-deck.html" },
+    { name: "Pitch Deck", href: "/pitch-deck" },
   ],
   Legal: [
     { name: "Privacy Policy", href: "/privacy-policy" },
