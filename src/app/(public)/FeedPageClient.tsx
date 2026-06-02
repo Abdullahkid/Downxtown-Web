@@ -235,13 +235,13 @@ export function FeedPageClient() {
         </div>
       )}
 
-      <div className="max-w-[1320px] mx-auto px-2 md:px-4 xl:px-6 pb-24 space-y-5">
+      <div className="max-w-[1320px] mx-auto px-0 md:px-4 xl:px-6 pb-24 space-y-5">
 
         {/* ---------------------------------------------------------------- */}
         {/* Master category icon row (Req 7.1)                               */}
         {/* ---------------------------------------------------------------- */}
         <section aria-label="Browse by category">
-          <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1" role="list">
+          <div className="flex gap-2.5 overflow-x-auto scrollbar-hide pb-1 px-3 md:px-0" role="list">
             {MASTER_CATEGORIES.map(({ label, imageSrc }) => {
               const isActive = activeCategory === label
               const slug = label.toLowerCase()
@@ -299,7 +299,7 @@ export function FeedPageClient() {
         {/* ---------------------------------------------------------------- */}
         {showGenderTabs && (
           <section aria-label="Filter by gender">
-            <div className="flex gap-2" role="tablist" aria-label="Gender filter">
+            <div className="flex gap-2 px-3 md:px-0" role="tablist" aria-label="Gender filter">
               {GENDER_TABS.map(({ label, value }) => {
                 const isActive = activeGender === value
                 return (

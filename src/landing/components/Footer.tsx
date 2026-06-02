@@ -30,12 +30,13 @@ const footerLinks = {
     { name: "Contact Us", href: "#contact" },
   ],
   Company: [
-    { name: "Pitch Deck", href: "/pitch-deck.html" },
+    { name: "Pitch Deck", href: "/pitch-deck" },
   ],
   Legal: [
-    { name: "Privacy Policy", href: "/privacy" },
+    { name: "Privacy Policy", href: "/privacy-policy" },
     { name: "Terms of Service", href: "/terms" },
     { name: "Cookie Policy", href: "/cookies" },
+    { name: "Return & Refund Policy", href: "/return-policy" },
   ],
 }
 
@@ -141,8 +142,10 @@ export function Footer() {
           </p>
           <div className="flex items-center gap-6 text-[13px] text-white/20">
             <Link href="/privacy" className="hover:text-white/50 transition-colors">Privacy</Link>
+            <Link href="/privacy-policy" className="hover:text-white/50 transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-white/50 transition-colors">Terms</Link>
             <Link href="/cookies" className="hover:text-white/50 transition-colors">Cookies</Link>
+            <Link href="/return-policy" className="hover:text-white/50 transition-colors">Returns</Link>
           </div>
         </div>
       </div>

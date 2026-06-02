@@ -86,7 +86,7 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
       {/* ------------------------------------------------------------------ */}
       <InstantLink
         href={`/store/${store.storeUsername}`}
-        className="relative z-10 w-full flex items-start gap-3 px-4 pb-3"
+        className="relative z-10 w-full flex items-start gap-3 px-3 pb-3"
         aria-label={`Visit ${store.storeName} store`}
         onClick={() => logStoreClick({
           store_id: store.businessId,
@@ -170,7 +170,10 @@ export function FeedStoreCard({ store }: FeedStoreCardProps) {
         >
           <div
             className={[
-              'flex gap-3 px-4 pb-1 overflow-x-auto',
+              // px-3 tighter internal padding; pr-[10vw] on mobile creates the
+              // intentional peek of the 3rd card, signalling the row is scrollable.
+              // On md+ the container is wider so a fixed pr-3 is fine.
+              'flex gap-3 px-3 pr-[10vw] md:pr-3 pb-1 overflow-x-auto',
               'scrollbar-hide',
               // Smooth momentum scrolling on iOS
               '[&]:[-webkit-overflow-scrolling:touch]',

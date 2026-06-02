@@ -106,6 +106,7 @@ export default function CookiesPage() {
           <Link href="/welcome" className="hover:text-white transition-colors">Home</Link>
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+          <Link href="/return-policy" className="hover:text-white transition-colors">Return Policy</Link>
           <Link href="/" className="hover:text-white transition-colors">Browse Feed</Link>
         </div>
       </div>

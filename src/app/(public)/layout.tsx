@@ -42,11 +42,17 @@ function SiteFooter() {
           <Link href="/privacy" className="hover:text-brand-accent transition-colors">
             Privacy
           </Link>
+          <Link href="/privacy-policy" className="hover:text-brand-accent transition-colors">
+            Privacy Policy
+          </Link>
           <Link href="/terms" className="hover:text-brand-accent transition-colors">
             Terms
           </Link>
           <Link href="/cookies" className="hover:text-brand-accent transition-colors">
             Cookies
+          </Link>
+          <Link href="/return-policy" className="hover:text-brand-accent transition-colors">
+            Returns
           </Link>
           <a
             href="mailto:hello@downxtown.com"
