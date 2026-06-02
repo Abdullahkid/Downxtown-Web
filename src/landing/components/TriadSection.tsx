@@ -11,8 +11,8 @@ const painStories = [
         imageAlt: "Website storefront interface",
         imageFit: "cover",
         imageBg: "bg-[#0a0f1a]",
-        story: "You ran ads for 6 months. You spent ₹2 lakh. Your website looked beautiful. But the moment you paused the campaigns — traffic stopped. You realised you don't know who your customers are, where they came from, or if they'll ever come back.",
-        realityCTA: "Organic traffic without ads is near-impossible.",
+        story: "You spent ₹2 lakh on ads.\nTraffic came. Orders came.\nThen you paused the campaigns.\nEverything stopped.\n\nWithout ads, your store becomes invisible.\nYour growth is rented.",
+        realityCTA: "Ad Dependency",
         poison: "Ad Dependency",
         badgeClass: "bg-white/10 text-white/70 border border-white/20",
         gradient: "linear-gradient(to right, rgba(10,10,10,0.15), rgba(10,10,10,0.5))"
@@ -24,8 +24,8 @@ const painStories = [
         imageAlt: "Social media feed interface",
         imageFit: "contain",
         imageBg: "bg-[#0a0a0a]",
-        story: "Your reel hit 200K views. People loved it. Comments were full of \"where can I buy this?\". You replied \"link in bio\" 47 times. Three people actually clicked through. One bought. The rest forgot you existed by the next morning.",
-        realityCTA: "Intent dies at every redirect.",
+        story: "Your reel hit 200K views.\nComments flooded in:\n\"Where can I buy this?\"\n\nYou replied: \"Link in bio.\"\nMost never clicked. The rest disappeared before checkout.\n\nAttention came. Intent didn't survive.",
+        realityCTA: "Discovery exists. Conversion doesn't.",
         poison: "Intent Decay",
         badgeClass: "bg-[#5b2cb6]/20 text-[#c084fc] border border-[#c084fc]/30",
         gradient: "linear-gradient(to left, rgba(10,10,10,0.15), rgba(10,10,10,0.5))",
@@ -33,13 +33,13 @@ const painStories = [
     },
     {
         num: "03",
-        channel: "Flipkart / Myntra / Meesho",
+        channel: "Flipkart / Myntra / Amazon",
         image: "/triad/triad-marketplaces.png",
         imageAlt: "Marketplace product grid interface",
         imageFit: "cover",
         imageBg: "bg-[#0a0d0a]",
-        story: "You sold 300 units in February. You still don't know who bought them. The platform has their email, their phone number, their order history. You have a payout. You can't run a follow-up campaign. You can't offer a loyalty code. You're a supplier, not a brand.",
-        realityCTA: "The platform owns your customer. You own the stock.",
+        story: "You sold 300 units.\nBut the marketplace owns:\nthe customer\nthe data\nthe relationship\n\nYou get payouts.\nNot brand loyalty.",
+        realityCTA: "The platform owns the customer. You own the inventory.",
         poison: "Identity Loss",
         badgeClass: "bg-[#c8641e]/20 text-[#fb923c] border border-[#fb923c]/30",
         gradient: "linear-gradient(to right, rgba(10,10,10,0.15), rgba(10,10,10,0.5))"
@@ -54,12 +54,13 @@ export function TriadSection() {
                     <div className="text-blue text-[10px] tracking-[5px] uppercase mb-4">01 — The Problem</div>
                     <h2 className="font-bebas text-[clamp(48px,6vw,90px)] leading-[0.92] text-white">
                         Each channel<br />
-                        does one thing.<br />
-                        <em className="font-serif italic text-blue non-italic">None do enough.</em>
+                        solves one problem.<br />
+                        <em className="font-serif italic text-blue non-italic">None solves the business.</em>
                     </h2>
                     <div className="w-12 h-[2px] bg-blue my-8" />
                     <p className="text-white/40 text-lg leading-relaxed font-light">
-                        A growing D2C brand is already on three channels simultaneously — and each one fails them in a different, compounding way. Recognize any of these?
+                        Every growing D2C brand is already on three channels.<br />
+                        And each one breaks in a different way.
                     </p>
                 </div>
 
@@ -97,8 +98,7 @@ export function TriadSection() {
 
                                 {/* The story — first person, experiential */}
                                 <div>
-                                    <div className="text-[10px] tracking-[3px] uppercase text-white/30 mb-5 font-medium">Does this sound familiar?</div>
-                                    <p className="text-[16px] leading-[1.75] text-white/65 max-w-[400px]">
+                                    <p className="text-[16px] leading-[1.75] text-white/65 max-w-[400px] whitespace-pre-line">
                                         {item.story}
                                     </p>
                                 </div>
@@ -129,9 +129,18 @@ export function TriadSection() {
                     transition={{ duration: 0.7 }}
                     className="mt-16 border border-white/10 bg-white/[0.02] p-10 md:p-14 text-center max-w-4xl mx-auto"
                 >
+                    <p className="text-white/70 text-xl md:text-2xl leading-relaxed font-light mb-6">
+                        The real problem is <em className="font-serif italic text-blue non-italic">fragmentation.</em>
+                    </p>
+                    <p className="text-white/40 text-base md:text-lg leading-relaxed font-light mb-8">
+                        Discovery happens in one place. Trust-building in another. Transactions somewhere else. Community nowhere.<br className="hidden md:block" />
+                        <br />
+                        Brands are forced to stitch together disconnected platforms just to simulate what should feel like one ecosystem.<br className="hidden md:block" />
+                        And the bigger they grow, the more fragmented everything becomes.
+                    </p>
                     <p className="text-white/50 text-lg md:text-xl leading-relaxed font-light">
-                        Every founder we&apos;ve spoken to is running all three of these channels simultaneously.<br className="hidden md:block" />
-                        And burning out doing it. There&apos;s a reason no one solved this —
+                        Every founder is trying to make all three work together.<br className="hidden md:block" />
+                        And burning out doing it.
                     </p>
                     <p className="mt-4 font-bebas text-[clamp(22px,3vw,36px)] text-white tracking-[1px]">
                         Until <em className="font-serif italic text-blue non-italic">now.</em>
