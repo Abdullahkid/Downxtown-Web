@@ -101,3 +101,11 @@ body {
 .brand-color-sk { background: linear-gradient(135deg, #000d1a, #001a2e); }
 .brand-color-no { background: linear-gradient(135deg, #0a001a, #1a002e); }
 .brand-color-ms { background: linear-gradient(135deg, #001a0a, #002e14); }
+
+/* Landing page — soften the DM Serif Display italic cyan em inside Bebas Neue headings.
+   Bebas Neue creates a visually heavy context; scaling em down slightly balances the weight. */
+.landing-page h1 em,
+.landing-page h2 em,
+.landing-page h3 em {
+  font-size: 0.88em;
+}
