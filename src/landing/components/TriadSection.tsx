@@ -127,24 +127,27 @@ export function TriadSection() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.7 }}
-                    className="mt-16 border border-white/10 bg-white/[0.02] p-10 md:p-14 text-center max-w-4xl mx-auto"
+                    className="mt-16 border border-blue/30 bg-blue/[0.04] p-10 md:p-14 text-center max-w-4xl mx-auto relative overflow-hidden"
                 >
-                    <p className="text-white/70 text-xl md:text-2xl leading-relaxed font-light mb-6">
-                        The real problem is <em className="font-serif italic text-blue non-italic">fragmentation.</em>
-                    </p>
-                    <p className="text-white/40 text-base md:text-lg leading-relaxed font-light mb-8">
-                        Discovery happens in one place. Trust-building in another. Transactions somewhere else. Community nowhere.<br className="hidden md:block" />
-                        <br />
-                        Brands are forced to stitch together disconnected platforms just to simulate what should feel like one ecosystem.<br className="hidden md:block" />
-                        And the bigger they grow, the more fragmented everything becomes.
-                    </p>
-                    <p className="text-white/50 text-lg md:text-xl leading-relaxed font-light">
-                        Every founder is trying to make all three work together.<br className="hidden md:block" />
-                        And burning out doing it.
-                    </p>
-                    <p className="mt-4 font-bebas text-[clamp(22px,3vw,36px)] text-white tracking-[1px]">
-                        Until <em className="font-serif italic text-blue non-italic">now.</em>
-                    </p>
+                    {/* Subtle glow behind the headline */}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <div className="w-[400px] h-[120px] rounded-full bg-blue/10 blur-3xl" />
+                    </div>
+
+                    <div className="relative">
+                        <div className="text-blue text-[10px] tracking-[5px] uppercase mb-5 font-medium">The Root Cause</div>
+                        <h3 className="font-bebas text-[clamp(36px,5vw,72px)] leading-[0.95] text-white mb-6">
+                            The real problem is<br />
+                            <em className="font-serif italic text-blue non-italic">fragmentation.</em>
+                        </h3>
+                        <div className="w-12 h-[2px] bg-blue mx-auto mb-8" />
+                        <p className="text-white/50 text-base md:text-lg leading-relaxed font-light">
+                            Discovery happens in one place. Trust-building in another. Transactions somewhere else. Community nowhere.<br className="hidden md:block" />
+                            <br />
+                            Brands are forced to stitch together disconnected platforms just to simulate what should feel like one ecosystem.<br className="hidden md:block" />
+                            And the bigger they grow, the more fragmented everything becomes.
+                        </p>
+                    </div>
                 </motion.div>
             </div>
         </section>
